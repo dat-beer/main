@@ -1,0 +1,264 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>☆ﾟ°˖* dat beer ᕕ( ᐛ )ᕗ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Suisse+Intl:wght@100;300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Suisse Intl', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background-color: #fff;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+        .header .logo {
+            font-weight: 300;
+            font-size: 24px;
+            cursor: pointer; /* Indicate clickable logo */
+        }
+        .header .nav a {
+            font-weight: 300;
+            margin-left: 20px;
+            text-decoration: none;
+            color: black;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .main {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center; /* Center vertically */
+            min-height: calc(100vh - 80px); /* Adjust for header height */
+            margin-top: 80px;
+            background: transparent; /* Allow body gradient to show */
+        }
+        .main h1 {
+            font-size: clamp(24px, 8vw, 48px); /* Responsive font size */
+            font-weight: bold;
+        }
+        .clickable {
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .beer-selection {
+            padding: 60px 20px; /* Increased padding */
+            margin-bottom: 80px; /* Added margin to create space before footer */
+            background: transparent; /* Allow body gradient to show */
+        }
+        .beer-list {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap; /* Allow wrapping on mobile */
+        }
+        .beer-item {
+            width: calc(50% - 20px);
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+        .beer-item .image-rect {
+            width: 100%;
+            height: 0;
+            padding-bottom: 100%; /* Creates a square aspect ratio */
+            background-color: #ddd;
+            margin: 0 auto 10px;
+            cursor: pointer;
+        }
+        .beer-item .title-description {
+            display: flex;
+            align-items: flex-end; /* Align text at the bottom of title */
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .beer-item h3 {
+            font-size: clamp(18px, 5vw, 24px); /* Responsive font size */
+            margin: 0;
+            white-space: nowrap; /* Prevent title from wrapping */
+        }
+        .beer-item h3 sup {
+            font-weight: 100; /* Very thin font weight for percentage */
+            font-size: 0.7em; /* Smaller size for superscript */
+        }
+        .beer-item p {
+            font-size: clamp(12px, 3vw, 16px); /* Responsive font size */
+            color: #555;
+            padding: 0;
+            margin: 0;
+            flex: 1; /* Allow description to take remaining space */
+            text-align: right; /* Right-align description text */
+        }
+        .beer-item.olat .title-description {
+            justify-content: flex-end; /* Right-align for ölat */
+        }
+        .beer-item.dat .title-description {
+            justify-content: flex-end; /* Right-align for dat */
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 40px;
+            font-size: clamp(12px, 3vw, 14px); /* Responsive font size */
+            background-color: #fff;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+        .footer span {
+            font-weight: 300;
+            cursor: pointer;
+        }
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+            .header .nav a {
+                font-size: 14px;
+            }
+            .main {
+                margin-top: 60px;
+                min-height: calc(100vh - 60px); /* Adjust for smaller header */
+            }
+            .beer-selection {
+                padding: 40px 10px; /* Adjusted padding for mobile */
+                margin-bottom: 60px; /* Adjusted margin for mobile */
+            }
+            .beer-item {
+                width: 100%;
+            }
+            .beer-item .title-description {
+                flex-direction: column; /* Stack title and description on mobile */
+                align-items: flex-end; /* Align right on mobile */
+            }
+            .beer-item p {
+                text-align: right; /* Maintain right alignment on mobile */
+            }
+            .footer {
+                padding: 15px 20px;
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo" id="dynamicLogo" onclick="document.querySelector('.main').scrollIntoView({ behavior: 'smooth' })">DdAJT</div>
+        <div class="nav">
+            <a onclick="document.getElementById('beerSection').scrollIntoView({ behavior: 'smooth' })">beers</a>
+        </div>
+    </div>
+    <div class="main">
+        <h1 id="dynamicTitle">drink <span class="clickable">the beers</span> of our times</h1>
+    </div>
+    <section id="beerSection" class="beer-selection">
+        <div class="beer-list">
+            <div class="beer-item olat">
+                <div class="image-rect" onclick="window.location.href='olat.html'"></div>
+                <div class="title-description">
+                    <h3>ölat <sup>5.5%</sup></h3>
+                    <p>rice and oat lager, hybrid theory in practice</p>
+                </div>
+            </div>
+            <div class="beer-item dat">
+                <div class="image-rect" onclick="window.location.href='dat.html'"></div>
+                <div class="title-description">
+                    <h3>dat <sup>5.5%</sup></h3>
+                    <p>recipe-fluid rice beer, diasporic manifesto</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="footer">
+        <span onclick="window.location.href='mailto:people@drinkdat.beer'">people@drinkdat.beer</span>
+        <span onclick="window.location.href='https://instagram.com/drinkdatbeer'">@drinkdatbeer, malmö, sweden</span>
+    </div>
+    <script>
+        const titles = [
+            "drink <span class='clickable'>the beers</span> of our times",
+            "can i have <span class='clickable'>dat beer</span> please?",
+            "<span class='clickable'>rice beer</span> right here"
+        ];
+        const logos = [
+            "DdAJT",
+            "dat",
+            "ölat",
+            "o147",
+            "đạt",
+            "達"
+        ];
+        const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+        const randomLogo = logos[Math.floor(Math.random() * logos.length)];
+        document.getElementById("dynamicTitle").innerHTML = randomTitle;
+        document.getElementById("dynamicLogo").textContent = randomLogo;
+
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('clickable')) {
+                const beerSection = document.getElementById('beerSection');
+                beerSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93a96537ca8db0e2',t:'MTc0NjM3NjM1OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
+</html>
