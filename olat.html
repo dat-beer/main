@@ -1,9 +1,48 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ölat - dat beer</title>
+    <title>ölat 5.5%</title>
     <link href="https://fonts.googleapis.com/css2?family=Suisse+Intl:wght@100;300;400;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -20,7 +59,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 40px;
+            padding: 15px 20px;
             background-color: #fff;
             position: fixed;
             top: 0;
@@ -30,15 +69,15 @@
         }
         .header .logo {
             font-weight: 300;
-            font-size: 24px;
-            cursor: pointer; /* Indicate clickable logo */
+            font-size: clamp(20px, 5vw, 22px);
+            cursor: pointer;
         }
         .header .nav a {
             font-weight: 300;
-            margin-left: 20px;
+            margin-left: 15px;
             text-decoration: none;
             color: black;
-            font-size: 16px;
+            font-size: clamp(12px, 3vw, 14px);
             cursor: pointer;
         }
         .main {
@@ -46,8 +85,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 100px 20px;
-            margin-top: 80px;
+            padding: 80px 15px;
+            margin-top: 60px;
             background: transparent;
         }
         .product-container {
@@ -70,23 +109,48 @@
             text-align: left;
         }
         .product-details h1 {
-            font-size: clamp(24px, 6vw, 36px);
+            font-size: clamp(20px, 6vw, 32px);
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         .product-details h1 sup {
             font-weight: 100;
             font-size: 0.7em;
         }
         .product-description {
-            font-size: clamp(14px, 4vw, 18px);
+            font-size: clamp(12px, 3vw, 16px);
+            font-weight: 300;
             color: #555;
+            text-align: justify;
+            text-align-last: left;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid #ddd;
+            margin: 15px 0;
+        }
+        .section {
+            margin: 10px 0;
+        }
+        .section-title {
+            font-size: clamp(12px, 3vw, 16px);
+            font-weight: 300;
+            color: #555;
+        }
+        .section-title.justified {
+            text-align: justify;
+            text-align-last: left;
+        }
+        .section-title.contributors {
+            text-align: left;
         }
         .footer {
             display: flex;
             justify-content: space-between;
-            padding: 20px 40px;
-            font-size: clamp(12px, 3vw, 14px);
+            padding: 15px 20px;
+            font-size: clamp(10px, 3vw, 12px);
             background-color: #fff;
             position: fixed;
             bottom: 0;
@@ -100,14 +164,11 @@
         }
         @media (max-width: 768px) {
             .header {
-                padding: 15px 20px;
-            }
-            .header .nav a {
-                font-size: 14px;
+                padding: 10px 15px;
             }
             .main {
-                padding: 80px 10px;
-                margin-top: 60px;
+                padding: 60px 10px;
+                margin-top: 50px;
             }
             .product-container {
                 flex-direction: column;
@@ -115,20 +176,51 @@
                 gap: 20px;
             }
             .product-image {
-                max-width: 300px;
-                padding-bottom: 66.67%; /* Maintain horizontally wide aspect ratio */
+                max-width: 100%;
+                width: 100%;
+                padding-bottom: 66.67%;
             }
             .product-details {
                 text-align: center;
+                width: 100%;
             }
             .product-description {
+                text-align: justify;
+                text-align-last: center;
+            }
+            .section-title.justified {
+                text-align: justify;
+                text-align-last: center;
+            }
+            .section-title.contributors {
                 text-align: center;
             }
+            hr {
+                margin: 10px 0;
+            }
             .footer {
-                padding: 15px 20px;
                 flex-direction: column;
                 text-align: center;
-                gap: 10px;
+                gap: 8px;
+                padding: 10px 15px;
+            }
+        }
+        @media (max-width: 480px) {
+            .header .logo {
+                font-size: clamp(18px, 5vw, 20px);
+            }
+            .header .nav a {
+                font-size: clamp(10px, 3vw, 12px);
+                margin-left: 10px;
+            }
+            .main {
+                padding: 50px 8px;
+            }
+            .product-details h1 {
+                font-size: clamp(18px, 6vw, 28px);
+            }
+            .product-description, .section-title {
+                font-size: clamp(11px, 3vw, 14px);
             }
         }
     </style>
@@ -146,8 +238,17 @@
             <div class="product-details">
                 <h1>ölat <sup>5.5%</sup></h1>
                 <p class="product-description">
-                    Hybrid theory in practice, ölat is a rice and oat lager originally crafted by Kristofer and Dat with a 150-liter brew batch in Lomma, between December 2024 and March 2025. Now brewed regularly at Kävlinge Brewery with great help from Per, ölat's unique blend showcases a crisp, refreshing taste. The percentage of oat in the recipe is projected to increase by one percent per year, enhancing its smooth character over time.
+                    is a hybrid theory in practice. The idea of introducing oat into rice beer was suggested by Kristofer to improve the mouthfeel and color of the beer while maintaining the gluten-free attribute. Dat thought that it is fair to include oat as an counterpart to rice from Vietnam and decide to use 5% oat in the grain bills to commemorate his fifth year in Sweden. With a great selection of New Zealand hops proposed by Kristofer, ölat tastes like a summer breeze. ölat is now regularly brewed at Kävlinge Brewery with great help from Per. The label is designed by Trang Hà. For the future of ölat, the percentage of oat is projected to increase by one percent every year.
                 </p>
+                <hr>
+                <div class="section">
+                    <div class="section-title justified">Ingredients: water, rice, oat, yeast, hops.</div>
+                </div>
+                <hr>
+                <div class="section">
+                    <div class="section-title contributors">Contributors: Kristofer Eklundh, Per Daneskog, Trang Ha Truong Nguyen, Dat Nguyen Trong.</div>
+                </div>
+                <hr>
             </div>
         </div>
     </div>
