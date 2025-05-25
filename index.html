@@ -1,29 +1,114 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>☆ﾟ°˖* dat beer ᕕ( ᐛ )ᕗ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
             padding: 0;
-            background-color: #e0f2e9;
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            text-align: center;
+            font-family: 'Times New Roman', Times, serif;
             width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #D8EED7, #FFFFFF);
+            overflow-x: hidden;
         }
-        img {
-            max-width: 100%;
-            height: auto;
+        .landing-section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .landing-text {
+            color: #0A2719;
+            font-size: 6.7vw; /* Scales from ~150px at 2240px width */
+            line-height: 1;
+            max-width: 90%;
+        }
+        .landing-text span:nth-child(2) {
+            display: block;
+            margin-top: 0.5em;
+        }
+        .landing-text span:nth-child(3) {
+            display: block;
+            margin-top: 0.4em;
+        }
+        .footer-text {
+            position: absolute;
+            bottom: 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.89vw; /* Scales from ~20px at 2240px width */
+            color: #0A2719;
+            width: 90%;
+            max-width: 1200px;
+            text-align: center;
+        }
+        .preorder-text span {
+            color: #FF032C; /* Red color for 'ölat is now available for preorder' */
+        }
+        .product-section {
+            min-height: 100vh;
+            padding: 5%;
+            box-sizing: border-box;
+        }
+        @media screen and (max-width: 768px) {
+            .landing-text {
+                font-size: 10vw;
+                max-width: 95%;
+            }
+            .landing-text span:nth-child(2) {
+                margin-top: 0.5em;
+            }
+            .landing-text span:nth-child(3) {
+                margin-top: 0.4em;
+            }
+            .footer-text {
+                font-family: 'Inter', sans-serif;
+                font-size: 3.5vw; /* Scales to ~14px at 400px width */
+                bottom: 10px;
+            }
+            .preorder-text {
+                text-align: center;
+            }
+            .landing-section {
+                padding: 10px;
+                min-height: 80vh;
+            }
+            .product-section {
+                padding: 10px;
+            }
+        }
+        @media screen and (max-width: 480px) {
+            .landing-text {
+                font-size: 12vw;
+            }
+            .footer-text {
+                font-size: 4.5vw; /* Scales to ~14px at 320px width */
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <img src="Desktop@4x.png" alt="ölat Beer Flyer">
-    </div>
+    <section class="landing-section">
+        <div class="landing-text">
+            <span>get dat beer at</span>
+            <span>0709-558-025</span>
+            <span>mon-sat 08-19</span>
+        </div>
+        <div class="footer-text">
+            <div class="preorder-text">05/16/25(Fri)16:29:08: <span>ölat is now available for preorder.</span></div>
+        </div>
+    </section>
+    <section class="product-section">
+        <!-- Product section content can be added here -->
+    </section>
 </body>
 </html>
