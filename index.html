@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>☆ﾟ°˖* dat beer ᕕ( ᐛ )ᕗ</title>
+    <title>Beer Landing Page</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
     <style>
         body {
@@ -36,28 +35,31 @@
         .landing-text span:nth-child(2) {
             display: block;
             margin-top: 0.5em;
+            text-decoration: none;
+            color: #0A2719;
+            -webkit-tap-highlight-color: transparent;
         }
         .landing-text span:nth-child(3) {
             display: block;
             margin-top: 0.4em;
+        }
+        .landing-text a[href^="tel"] {
+            color: #0A2719 !important;
+            text-decoration: none !important;
+            pointer-events: none;
         }
         .footer-text {
             position: absolute;
             bottom: 20px;
             font-family: 'Inter', sans-serif;
             font-size: 0.89vw; /* Scales from ~20px at 2240px width */
-            color: #0A2719;
+            color: #0A2719; /* Dark green */
             width: 90%;
             max-width: 1200px;
             text-align: center;
         }
-        .preorder-text span {
-            color: #FF032C; /* Red color for 'ölat is now available for preorder' */
-        }
-        .product-section {
-            min-height: 100vh;
-            padding: 5%;
-            box-sizing: border-box;
+        .footer-text span {
+            color: #FF032C; /* Red color for 'dat-beer is now available for preorder 𖡼𖤣𖥧𖡼𓋼𖤣𖥧𓋼𓍊𓇗' */
         }
         @media screen and (max-width: 768px) {
             .landing-text {
@@ -66,24 +68,29 @@
             }
             .landing-text span:nth-child(2) {
                 margin-top: 0.5em;
+                text-decoration: none;
+                color: #0A2719;
+                -webkit-tap-highlight-color: transparent;
             }
             .landing-text span:nth-child(3) {
                 margin-top: 0.4em;
+            }
+            .landing-text a[href^="tel"] {
+                color: #0A2719 !important;
+                text-decoration: none !important;
+                pointer-events: none;
             }
             .footer-text {
                 font-family: 'Inter', sans-serif;
                 font-size: 3.5vw; /* Scales to ~14px at 400px width */
                 bottom: 10px;
             }
-            .preorder-text {
+            .footer-text {
                 text-align: center;
             }
             .landing-section {
                 padding: 10px;
                 min-height: 80vh;
-            }
-            .product-section {
-                padding: 10px;
             }
         }
         @media screen and (max-width: 480px) {
@@ -99,16 +106,13 @@
 <body>
     <section class="landing-section">
         <div class="landing-text">
-            <span>get dat beer at</span>
-            <span>0709-558-025</span>
-            <span>mon-sat 08-19</span>
+            <span>sustainability</span>
+            <span>zeitgeist</span>
+            <span>unity</span>
         </div>
         <div class="footer-text">
-            <div class="preorder-text">05/16/25(Fri)16:29:08: <span>ölat is now available for preorder.</span></div>
+            <div class="preorder-text">05/16/25(Fri)16:29:08: <span>dat-beer is now available for preorder 𖡼𖤣𖥧𖡼𓋼𖤣𖥧𓋼𓍊𓇗.</span></div>
         </div>
-    </section>
-    <section class="product-section">
-        <!-- Product section content can be added here -->
     </section>
 </body>
 </html>
