@@ -11,9 +11,6 @@
             padding: 0;
             font-family: 'Times New Roman', Times, serif;
             width: 100%;
-            min-height: 100vh;
-            background: url('background.png') no-repeat center center fixed;
-            background-size: cover;
             overflow-x: hidden;
         }
         header {
@@ -24,6 +21,7 @@
             justify-content: flex-start;
             padding: 20px;
             box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.8);
         }
         nav {
             display: flex;
@@ -49,6 +47,81 @@
             position: relative;
             padding: 20px;
             box-sizing: border-box;
+            background: url('background.png') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .contact-section {
+            background: #000000;
+            color: #FFFFFF;
+            padding: 60px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 60vh;
+        }
+        .contact-container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            gap: 40px;
+        }
+        .contact-left {
+            flex: 1;
+            padding: 20px;
+        }
+        .contact-left h2 {
+            font-family: 'Inter', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        .contact-left p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+        .contact-right {
+            flex: 1;
+            padding: 20px;
+        }
+        .contact-right form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .contact-right label {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2rem;
+        }
+        .contact-right input,
+        .contact-right textarea {
+            padding: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            border: 1px solid #FFFFFF;
+            background: #333333;
+            color: #FFFFFF;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .contact-right textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        .contact-right button {
+            padding: 10px 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2rem;
+            background: #FFFFFF;
+            color: #0A2719;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: fit-content;
+        }
+        .contact-right button:hover {
+            background: #E0E0E0;
         }
         @media screen and (max-width: 768px) {
             nav {
@@ -64,6 +137,21 @@
                 padding: 10px;
                 min-height: 80vh;
             }
+            .contact-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .contact-left,
+            .contact-right {
+                padding: 10px;
+            }
+            .contact-left h2 {
+                font-size: 2rem;
+            }
+            .contact-left p,
+            .contact-right label {
+                font-size: 1rem;
+            }
         }
         @media screen and (max-width: 480px) {
             nav {
@@ -71,6 +159,17 @@
             }
             nav a {
                 font-size: 0.9rem;
+            }
+            .contact-left h2 {
+                font-size: 1.8rem;
+            }
+            .contact-left p,
+            .contact-right label {
+                font-size: 0.9rem;
+            }
+            .contact-right button {
+                font-size: 1rem;
+                padding: 8px 16px;
             }
         }
     </style>
@@ -86,6 +185,25 @@
     </header>
     <section class="landing-section">
         <!-- Text removed -->
+    </section>
+    <section class="contact-section">
+        <div class="contact-container">
+            <div class="contact-left">
+                <h2>Contact Us</h2>
+                <p>Interested in working together? Want to get a sample pack? Or some suggestion and feedback? Can’t wait to hear from you!</p>
+            </div>
+            <div class="contact-right">
+                <form>
+                    <label for="name">Your name</label>
+                    <input type="text" id="name" name="name" required>
+                    <label for="email">Your email</label>
+                    <input type="email" id="email" name="email" required>
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" required></textarea>
+                    <button type="submit">Send</button>
+                </form>
+            </div>
+        </div>
     </section>
 </body>
 </html>
