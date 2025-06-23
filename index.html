@@ -16,6 +16,29 @@
             background-size: cover;
             overflow-x: hidden;
         }
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: flex-start;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        nav {
+            display: flex;
+            gap: 20px;
+        }
+        nav a {
+            color: #0A2719;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        nav a:hover {
+            color: #FF032C;
+        }
         .landing-section {
             min-height: 100vh;
             display: flex;
@@ -27,67 +50,15 @@
             padding: 20px;
             box-sizing: border-box;
         }
-        .landing-text {
-            color: #0A2719;
-            font-size: 6.7vw;
-            line-height: 1;
-            max-width: 90%;
-        }
-        .landing-text span:nth-child(2) {
-            display: block;
-            margin-top: 0.5em;
-            text-decoration: none;
-            color: #0A2719;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .landing-text span:nth-child(3) {
-            display: block;
-            margin-top: 0.4em;
-        }
-        .landing-text a[href^="tel"] {
-            color: #0A2719 !important;
-            text-decoration: none !important;
-            pointer-events: none;
-        }
-        .footer-text {
-            position: absolute;
-            bottom: 20px;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.89vw;
-            color: #0A2719;
-            width: 90%;
-            max-width: 1200px;
-            text-align: center;
-        }
-        .footer-text span {
-            color: #FF032C;
-        }
         @media screen and (max-width: 768px) {
-            .landing-text {
-                font-size: 10vw;
-                max-width: 95%;
+            nav {
+                gap: 15px;
             }
-            .landing-text span:nth-child(2) {
-                margin-top: 0.5em;
-                text-decoration: none;
-                color: #0A2719;
-                -webkit-tap-highlight-color: transparent;
+            nav a {
+                font-size: 1rem;
             }
-            .landing-text span:nth-child(3) {
-                margin-top: 0.4em;
-            }
-            .landing-text a[href^="tel"] {
-                color: #0A2719 !important;
-                text-decoration: none !important;
-                pointer-events: none;
-            }
-            .footer-text {
-                font-family: 'Inter', sans-serif;
-                font-size: 3.5vw;
-                bottom: 10px;
-            }
-            .footer-text {
-                text-align: center;
+            header {
+                padding: 10px;
             }
             .landing-section {
                 padding: 10px;
@@ -95,16 +66,24 @@
             }
         }
         @media screen and (max-width: 480px) {
-            .landing-text {
-                font-size: 12vw;
+            nav {
+                gap: 10px;
             }
-            .footer-text {
-                font-size: 4.5vw;
+            nav a {
+                font-size: 0.9rem;
             }
         }
     </style>
 </head>
 <body>
+    <header>
+        <nav>
+            <a href="https://drinkdat.beer">drinkdat.beer</a>
+            <a href="about.html">about</a>
+            <a href="product.html">product</a>
+            <a href="contact.html">contact</a>
+        </nav>
+    </header>
     <section class="landing-section">
         <!-- Text removed -->
     </section>
