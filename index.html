@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Beer Landing Page</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -123,6 +123,47 @@
         .contact-right button:hover {
             background: #E0E0E0;
         }
+        footer {
+            background: #FFFFFF;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .footer-logo {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.8rem;
+            color: #0A2719;
+            margin-bottom: 20px;
+        }
+        .footer-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            gap: 20px;
+        }
+        .footer-left {
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: #0A2719;
+        }
+        .footer-right {
+            text-align: right;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: #0A2719;
+        }
+        .footer-right a {
+            color: #0A2719;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .footer-right a:hover {
+            color: #FF032C;
+        }
         @media screen and (max-width: 768px) {
             nav {
                 gap: 15px;
@@ -152,6 +193,14 @@
             .contact-right label {
                 font-size: 1rem;
             }
+            .footer-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            .footer-left,
+            .footer-right {
+                text-align: center;
+            }
         }
         @media screen and (max-width: 480px) {
             nav {
@@ -170,6 +219,13 @@
             .contact-right button {
                 font-size: 1rem;
                 padding: 8px 16px;
+            }
+            .footer-logo {
+                font-size: 1.5rem;
+            }
+            .footer-left,
+            .footer-right {
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -205,5 +261,16 @@
             </div>
         </div>
     </section>
+    <footer>
+        <div class="footer-logo">drinkdat.beer</div>
+        <div class="footer-container">
+            <div class="footer-left">
+                <p>Vitemöllegatan 10G<br>214 42 Malmö, Sweden</p>
+            </div>
+            <div class="footer-right">
+                <p><a href="mailto:dat@drinkdat.beer">dat@drinkdat.beer</a><br><a href="tel:+46709558025">070-955 80 25</a></p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
