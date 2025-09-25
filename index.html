@@ -1,278 +1,131 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beer Landing Page</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Times New Roman', Times, serif;
-            width: 100%;
-            overflow-x: hidden;
-            background: url('background.png') no-repeat center top;
-            background-size: auto;
-        }
-        header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            display: flex;
-            justify-content: flex-start;
-            padding: 20px;
-            box-sizing: border-box;
-            background: #FFFFFF;
-            z-index: 1000;
-        }
-        nav {
-            display: flex;
-            gap: 20px;
-        }
-        nav a {
-            color: #0A2719;
-            font-family: 'Inter', sans-serif;
-            font-size: 1.2rem;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        nav a:hover {
-            color: #FF032C;
-        }
-        .landing-section {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            position: relative;
-            padding: 20px;
-            box-sizing: border-box;
-            background: transparent;
-        }
-        .contact-section {
-            background: #000000;
-            color: #FFFFFF;
-            padding: 60px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 60vh;
-        }
-        .contact-container {
-            display: flex;
-            width: 100%;
-            max-width: 1200px;
-            gap: 40px;
-        }
-        .contact-left {
-            flex: 1;
-            padding: 20px;
-        }
-        .contact-left h2 {
-            font-family: 'Inter', sans-serif;
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-        }
-        .contact-left p {
-            font-family: 'Inter', sans-serif;
-            font-size: 1.2rem;
-            line-height: 1.6;
-        }
-        .contact-right {
-            flex: 1;
-            padding: 20px;
-        }
-        .contact-right form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .contact-right label {
-            font-family: 'Inter', sans-serif;
-            font-size: 1.2rem;
-        }
-        .contact-right input,
-        .contact-right textarea {
-            padding: 10px;
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            border: 1px solid #FFFFFF;
-            background: #333333;
-            color: #FFFFFF;
-            border-radius: 5px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .contact-right textarea {
-            min-height: 150px;
-            resize: vertical;
-        }
-        .contact-right button {
-            padding: 10px 20px;
-            font-family: 'Inter', sans-serif;
-            font-size: 1.2rem;
-            background: #FFFFFF;
-            color: #0A2719;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-            width: fit-content;
-        }
-        .contact-right button:hover {
-            background: #E0E0E0;
-        }
-        footer {
-            background: #FFFFFF;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-        .footer-logo {
-            font-family: 'Inter', sans-serif;
-            font-size: 1.8rem;
-            color: #0A2719;
-            margin-bottom: 20px;
-        }
-        .footer-container {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 1200px;
-            gap: 20px;
-        }
-        .footer-left {
-            text-align: left;
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            color: #0A2719;
-        }
-        .footer-right {
-            text-align: right;
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            color: #0A2719;
-        }
-        .footer-right a {
-            color: #0A2719;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        .footer-right a:hover {
-            color: #FF032C;
-        }
-        @media screen and (max-width: 768px) {
-            nav {
-                gap: 15px;
-            }
-            nav a {
-                font-size: 1rem;
-            }
-            header {
-                padding: 10px;
-            }
-            .landing-section {
-                padding: 10px;
-                min-height: 80vh;
-            }
-            .contact-container {
-                flex-direction: column;
-                gap: 20px;
-            }
-            .contact-left,
-            .contact-right {
-                padding: 10px;
-            }
-            .contact-left h2 {
-                font-size: 2rem;
-            }
-            .contact-left p,
-            .contact-right label {
-                font-size: 1rem;
-            }
-            .footer-container {
-                flex-direction: column;
-                text-align: center;
-            }
-            .footer-left,
-            .footer-right {
-                text-align: center;
-            }
-        }
-        @media screen and (max-width: 480px) {
-            nav {
-                gap: 10px;
-            }
-            nav a {
-                font-size: 0.9rem;
-            }
-            .contact-left h2 {
-                font-size: 1.8rem;
-            }
-            .contact-left p,
-            .contact-right label {
-                font-size: 0.9rem;
-            }
-            .contact-right button {
-                font-size: 1rem;
-                padding: 8px 16px;
-            }
-            .footer-logo {
-                font-size: 1.5rem;
-            }
-            .footer-left,
-            .footer-right {
-                font-size: 0.9rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Rice Beer Right Here</title>
+  <meta name="viewport" content="width=1920, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #e6f4ec;
+      margin: 0;
+      width: 1920px;
+      height: 1080px;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      box-sizing: border-box;
+      color: #38a536;
+    }
+    .container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      box-sizing: border-box;
+      padding: 38px 0 0 48px;
+    }
+    .main-title {
+      font-size: 54px;
+      font-weight: 300;
+      margin-bottom: 16px;
+      line-height: 1.1;
+      letter-spacing: 0.5px;
+    }
+    .percent {
+      color: #b6c7b6;
+      font-size: 44px;
+      font-weight: 300;
+      vertical-align: super;
+      margin-right: 7px;
+      margin-left: 7px;
+    }
+    .list {
+      margin-left: 0;
+      margin-bottom: 56px;
+      padding-left: 32px; /* space for bullet */
+      color: #38a536;
+      list-style: none;
+    }
+    .list-item {
+      font-size: 48px;
+      font-weight: 300;
+      margin-bottom: 8px;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      line-height: 1.07;
+      position: relative;
+      padding-left: 44px;
+    }
+    .list-item::before {
+      content: "○";
+      color: #38a536; /* green bullet matches text */
+      font-size: 38px;
+      position: absolute;
+      left: 0;
+      top: 2px;
+      line-height: 1;
+      font-weight: 300;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+    }
+    .return-section {
+      margin-top: 58px;
+      margin-bottom: 64px;
+      color: #38a536;
+      font-size: 54px;
+      font-weight: 300;
+      line-height: 1.18;
+      max-width: 900px;
+    }
+    .percent2 {
+      color: #b6c7b6;
+      font-size: 44px;
+      font-weight: 300;
+      margin-right: 7px;
+      margin-left: 7px;
+      vertical-align: super;
+    }
+    .footer {
+      position: absolute;
+      left: 48px;
+      bottom: 70px;
+      font-size: 48px;
+      font-weight: 300;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      line-height: 1.18;
+      color: #38a536;
+      letter-spacing: 0.2px;
+    }
+    .footer .footer-line {
+      margin-bottom: 5px;
+    }
+    .footer .footer-email {
+      color: #b6c7b6;
+      text-decoration: none;
+      font-size: 48px;
+      font-weight: 300;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      margin-left: 7px;
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <a href="https://drinkdat.beer">drinkdat.beer</a>
-            <a href="about.html">about</a>
-            <a href="product.html">product</a>
-            <a href="contact.html">contact</a>
-        </nav>
-    </header>
-    <section class="landing-section">
-        <!-- Text removed -->
-    </section>
-    <section class="contact-section">
-        <div class="contact-container">
-            <div class="contact-left">
-                <h2>Contact Us</h2>
-                <p>Interested in working together? Want to get a sample pack? Or some suggestion and feedback? Can’t wait to hear from you!</p>
-            </div>
-            <div class="contact-right">
-                <form>
-                    <label for="name">Your name</label>
-                    <input type="text" id="name" name="name" required>
-                    <label for="email">Your email</label>
-                    <input type="email" id="email" name="email" required>
-                    <label for="message">Message</label>
-                    <textarea id="message" name="message" required></textarea>
-                    <button type="submit">Send</button>
-                </form>
-            </div>
-        </div>
-    </section>
-    <footer>
-        <div class="footer-logo">drinkdat.beer</div>
-        <div class="footer-container">
-            <div class="footer-left">
-                <p>Vitemöllegatan 10G<br>214 42 Malmö, Sweden</p>
-            </div>
-            <div class="footer-right">
-                <p><a href="mailto:dat@drinkdat.beer">dat@drinkdat.beer</a><br><a href="tel:+46709558025">070-955 80 25</a></p>
-            </div>
-        </div>
-    </footer>
+  <div class="container">
+    <div class="main-title">
+      ölät <span class="percent">2.2%</span> finns att köpa på:
+    </div>
+    <ul class="list">
+      <li class="list-item">Kiosko Import</li>
+      <li class="list-item">Karombar</li>
+      <li class="list-item">Folköl &amp; DunkaDunka</li>
+    </ul>
+
+    <div class="return-section">
+      ölät <span class="percent2">5.3%</span> förväntas komma<br> tillbaka lagom till vintern.
+    </div>
+
+    <div class="footer">
+      <div class="footer-line">för förfrågningar, du kan</div>
+      <div class="footer-line">
+        skriva till: <a class="footer-email" href="mailto:dat@drinkdat.beer">dat@drinkdat.beer</a>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
