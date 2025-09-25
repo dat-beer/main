@@ -6,107 +6,153 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --green: #38a536;
+      --gray: #b6c7b6;
+      --bg: #e6f4ec;
+      --maxwidth: 1500px;
+    }
     body {
-      background: #e6f4ec;
+      background: var(--bg);
       margin: 0;
       font-family: 'Inter', Arial, Helvetica, sans-serif;
-      color: #38a536;
+      color: var(--green);
       box-sizing: border-box;
+      width: 100vw;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
     .container {
-      position: relative;
-      width: 100%;
+      max-width: var(--maxwidth);
+      margin: 0 auto;
       min-height: 100vh;
       box-sizing: border-box;
-      padding: 2em 4vw 2em 4vw;
       display: flex;
       flex-direction: column;
+      justify-content: flex-start;
+      padding: 36px 0 48px 48px;
     }
     .main-title {
-      font-size: 2.2em;
+      font-size: 54px;
       font-weight: 300;
-      margin-bottom: 0.8em;
-      line-height: 1.18;
-      word-break: break-word;
-      letter-spacing: 0.5px;
+      line-height: 1.06;
+      margin-bottom: 22px;
+      letter-spacing: 0.3px;
     }
     .percent {
-      color: #b6c7b6;
-      font-size: 1em; /* scales with heading */
+      color: var(--gray);
+      font-size: 44px;
       font-weight: 300;
       vertical-align: super;
       margin: 0 6px;
     }
     .list {
-      margin-left: 0;
-      margin-bottom: 2em;
-      padding-left: 0;
+      margin: 0 0 0 24px;
+      padding: 0;
       list-style: none;
     }
     .list-item {
-      font-size: 1.23em;
+      font-size: 48px;
       font-weight: 300;
-      margin-bottom: 0.65em;
-      padding-left: 2em;
+      margin-bottom: 10px;
+      padding-left: 36px;
       position: relative;
-      line-height: 1.1;
+      line-height: 1.08;
     }
     .list-item::before {
       content: "○";
-      color: #38a536;
-      font-size: 1em;
+      color: var(--green);
+      font-size: 38px;
       position: absolute;
       left: 0;
-      top: 0.08em;
+      top: 0.09em;
       font-weight: 300;
       font-family: 'Inter', Arial, Helvetica, sans-serif;
     }
+    .section-spacer {
+      height: 80px;
+    }
     .return-section {
-      margin: 2em 0 .5em 0;
-      color: #38a536;
-      font-size: 2em;
+      font-size: 54px;
       font-weight: 300;
-      line-height: 1.2;
-      max-width: 98vw;
-      word-break: break-word;
+      line-height: 1.14;
+      margin-bottom: 110px;
+      color: var(--green);
     }
     .percent2 {
-      color: #b6c7b6;
-      font-size: 1em; /* scales with .return-section */
+      color: var(--gray);
+      font-size: 44px;
       font-weight: 300;
-      margin: 0 6px;
       vertical-align: super;
+      margin: 0 6px;
     }
     .footer {
-      position: static;
-      margin-top: 2em;
-      font-size: 1.1em;
+      position: absolute;
+      left: 48px;
+      bottom: 48px;
+      font-size: 44px;
       font-weight: 300;
-      line-height: 1.25;
-      color: #38a536;
-      letter-spacing: 0.2px;
-      word-break: break-word;
+      color: var(--green);
+      line-height: 1.1;
     }
-    .footer .footer-line {
-      margin-bottom: 0.3em;
-    }
-    .footer .footer-email {
-      color: #b6c7b6;
+    .footer-email {
+      color: var(--gray);
       text-decoration: none;
+      font-size: 44px;
       font-weight: 300;
-      margin-left: 7px;
+      margin-left: 0.2em;
     }
-    @media (max-width:700px) {
-      .main-title, .return-section { font-size: 1.25em; }
-      .container { padding: 1.2em 3vw .8em 3vw; }
-      .list-item { font-size: 0.94em; padding-left: 1.22em;}
-      .footer { font-size: 0.95em; margin-top: 1.3em;}
+    @media (max-width: 1050px) {
+      .container,
+      .footer {
+        padding-left: 18px;
+        left: 18px;
+      }
     }
-    @media (max-width:400px) {
-      .main-title, .return-section { font-size: 0.92em; }
-      .container { padding: 0.7em 2vw .6em 2vw; }
-      .list-item { font-size: 0.81em; }
-      .footer { font-size: 0.84em; margin-top: 0.7em;}
+    @media (max-width: 760px) {
+      .container {
+        padding: 24px 0 22px 5vw;
+        min-width: 0;
+      }
+      .main-title { font-size: 27vw; }
+      .return-section { font-size: 26vw; }
+      .footer, .footer-email { font-size: 22vw; }
+      .list-item { font-size: 24vw; padding-left: 8vw; }
+      .list-item::before { font-size: 7vw; }
+      .percent, .percent2 { font-size: 17vw; }
+      .footer { left: 5vw; bottom: 5vw; }
+      .section-spacer { height: 6vw; }
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding-top: 5vw;
+        padding-left: 3vw;
+        padding-bottom: 15vw;
+      }
+      .main-title,
+      .return-section {
+        font-size: 7vw;
+        margin-bottom: 4vw;
+      }
+      .list-item {
+        font-size: 5.6vw;
+        margin-bottom: 2vw;
+        padding-left: 2.7vw;
+      }
+      .list-item::before {
+        font-size: 2vw;
+      }
+      .percent, .percent2 {
+        font-size: 2.1vw;
+      }
+      .footer, .footer-email {
+        font-size: 5vw;
+        left: 3vw;
+        bottom: 6vw;
+      }
+    }
+    @media (max-width: 480px) {
+      .container { padding-left: 3vw; }
     }
   </style>
 </head>
@@ -120,14 +166,13 @@
       <li class="list-item">Karombar</li>
       <li class="list-item">Folköl &amp; DunkaDunka</li>
     </ul>
+    <div class="section-spacer"></div>
     <div class="return-section">
       ölät <span class="percent2">5.3%</span> förväntas komma<br> tillbaka lagom till vintern.
     </div>
     <div class="footer">
-      <div class="footer-line">för förfrågningar, du kan</div>
-      <div class="footer-line">
-        skriva till: <a class="footer-email" href="mailto:dat@drinkdat.beer">dat@drinkdat.beer</a>
-      </div>
+      för förfrågningar, du kan<br>
+      skriva till: <span class="footer-email">dat@drinkdat.beer</span>
     </div>
   </div>
 </body>
