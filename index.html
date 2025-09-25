@@ -12,7 +12,7 @@
       --bg: #e6f4ec;
       --main-size: 48px;
       --mobile-size: 7vw;
-      --mobile-maxwidth: 94vw;
+      --mobile-maxwidth: 96vw;
     }
     body {
       background: var(--bg);
@@ -25,8 +25,8 @@
     }
     .container {
       max-width: 1400px;
-      margin: 0 auto;
       min-height: 100vh;
+      margin: 0 auto;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
@@ -38,14 +38,17 @@
       font-weight: 300;
       line-height: 1.18;
       margin-bottom: 32px;
+      color: var(--green);
+      letter-spacing: 0.2px;
+      text-align: left;
     }
     .percent, .percent2 {
       color: var(--gray);
       font-size: .6em;
       font-weight: 300;
-      vertical-align: sub;
-      margin: 0 4px;
-      letter-spacing: 0.2px;
+      vertical-align: super;
+      margin: 0 2px;
+      letter-spacing: 0.1px;
       position: relative;
     }
     ul.list { 
@@ -53,14 +56,16 @@
       margin-bottom: 48px;
       padding: 0;
       list-style: none;
+      text-align: left;
     }
     .list-item {
       font-size: var(--main-size);
       font-weight: 300;
       margin-bottom: 8px;
       padding-left: 36px;
-      position: relative;
       line-height: 1.09;
+      position: relative;
+      text-align: left;
     }
     .list-item::before {
       content: "○";
@@ -78,6 +83,10 @@
       line-height: 1.18;
       margin-bottom: 40px;
       color: var(--green);
+      text-align: left;
+    }
+    .spacer {
+      flex: 1;
     }
     .footer {
       font-size: var(--main-size);
@@ -98,32 +107,30 @@
       font-weight: inherit;
       margin-left: 0.2em;
     }
-    @media (max-width: 900px) {
-      .container {padding-left: 7vw;}
-      ul.list {margin-left: 3vw;}
-      .footer {left: 7vw; right: 7vw;}
-    }
     @media (max-width: 700px) {
       .container {
         max-width: var(--mobile-maxwidth);
-        padding: 7vw 0 7vw 0;
-        align-items: center;
+        width: 100vw;
+        min-height: 100vh;
+        padding: 6vw 0 0 4vw;
+        position: relative;
+        display: flex;
+        flex-direction: column;
       }
       .alltext,
       .list-item,
-      .return-section,
-      .footer {
+      .return-section {
         font-size: var(--mobile-size);
         margin-bottom: 4vw;
         max-width: var(--mobile-maxwidth);
-        width: 100%;
-        text-align: center;
+        text-align: left;
       }
       ul.list {
         margin-left: 0;
         margin-bottom: 5vw;
-        width: 100%;
         padding: 0;
+        width: 100vw;
+        max-width: var(--mobile-maxwidth);
       }
       .list-item { 
         font-size: var(--mobile-size);
@@ -131,20 +138,22 @@
         margin-bottom: 3vw;
         max-width: var(--mobile-maxwidth); 
         text-align: left;
-        display: block;
       }
       .list-item::before { font-size: 6vw; }
-      .percent, .percent2 { font-size: .6em; vertical-align: sub; }
+      .percent, .percent2 { font-size: 0.5em; vertical-align: super; }
+      .return-section { margin-bottom: 5vw;}
+      .spacer { flex: 1; }
       .footer {
-        position: static;
-        left: auto;
-        right: auto;
-        bottom: auto;
-        margin-top: 5vw;
-        margin-bottom: 2vw;
-        text-align: center;
+        font-size: var(--mobile-size);
+        position: absolute;
+        left: 4vw;
+        right: 0;
+        bottom: 5vw;
+        width: 92vw;
+        text-align: left;
+        margin: 0;
       }
-      .footer-email { margin-left: 0.2vw; color: var(--gray);}
+      .footer-email { font-size: inherit; margin-left: 0.2vw; color: var(--gray);}
     }
   </style>
 </head>
@@ -161,6 +170,7 @@
     <div class="return-section">
       ölät <span class="percent2">5.3%</span> förväntas komma<br> tillbaka lagom till vintern.
     </div>
+    <div class="spacer"></div>
     <div class="footer">
       för förfrågningar, du kan skriva till: 
       <a class="footer-email" href="mailto:dat@drinkdat.beer">dat@drinkdat.beer</a>
