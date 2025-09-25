@@ -1,148 +1,189 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
   <meta charset="UTF-8">
+  <title>Rice Beer Right Here</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ò drinkdatbeer – Malmö’s Rice Beer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300&display=swap" rel="stylesheet">
   <style>
     body {
+      background: #e6f4ec;
       margin: 0;
-      padding: 0;
-      font-family: 'Inter', Arial, sans-serif;
-      background: #F8F9FA;
-      color: #2E2E2E;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      color: #38a536;
+      box-sizing: border-box;
     }
     .container {
-      background: #FFF;
-      border-radius: 18px;
-      box-shadow: 0 2px 18px rgba(0,0,0,0.05);
-      padding: 2.5rem 2rem 2rem 2rem;
-      max-width: 480px;
+      position: relative;
       width: 100%;
-      margin: 5vw;
-      text-align: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+      padding: 2em 10vw 2em 10vw;
+      display: flex;
+      flex-direction: column;
     }
-    h1 {
-      font-size: 2.4rem;
-      font-weight: 700;
-      letter-spacing: 0.01em;
-      color: #507B66;
-      margin-bottom: 0.5em;
+    .main-title {
+      font-size: 2.7em;
+      font-weight: 300;
+      margin-bottom: 1.2em;
+      line-height: 1.19;
+      word-break: break-word;
+      letter-spacing: 0.5px;
+      max-width: 40em;
     }
-    .subtitle {
-      font-size: 1.25rem;
-      font-weight: 400;
-      color: #6B7C85;
-      margin-bottom: 1.5em;
+    .percent {
+      color: #b6c7b6;
+      font-size: 1em;
+      font-weight: 300;
+      vertical-align: super;
+      margin: 0 8px;
     }
-    ul {
-      text-align: left;
-      margin: 1.5em auto 1.5em auto;
+    .list {
+      margin-left: 0;
+      margin-bottom: 2.8em;
       padding-left: 0;
       list-style: none;
-      font-size: 1.11rem;
-      line-height: 1.5;
-      letter-spacing: .01em;
+      max-width: 35em;
     }
-    li {
-      margin: 1.2em 0;
-      /* Ensures numbers and text align well */
+    .list-item {
+      font-size: 1.7em;
+      font-weight: 300;
+      margin-bottom: 0.8em;
+      padding-left: 2em;
+      position: relative;
+      line-height: 1.15;
     }
-    .abv {
-      font-weight: bold;
-      color: #354B41;
-      font-size: 1em; /* Let it scale with parent */
-      letter-spacing: 0.01em;
+    .list-item::before {
+      content: "○";
+      color: #38a536;
+      font-size: 1em;
+      position: absolute;
+      left: 0;
+      top: 0.16em;
+      font-weight: 300;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
     }
-    .contact {
-      margin-top: 2em;
-      font-size: 1.13rem;
-      background: #F2F7F1;
-      border-radius: 12px;
-      padding: 1.2em 1em;
-      color: #354B41;
+    .return-section {
+      margin: 2.3em 0 1em 0;
+      color: #38a536;
+      font-size: 2.7em;
+      font-weight: 300;
+      line-height: 1.21;
+      max-width: 42em;
       word-break: break-word;
     }
-    .contact a {
-      color: #507B66;
+    .percent2 {
+      color: #b6c7b6;
+      font-size: 1em;
+      font-weight: 300;
+      margin: 0 8px;
+      vertical-align: super;
+    }
+    .footer {
+      position: static;
+      margin-top: 2.5em;
+      font-size: 1.5em;
+      font-weight: 300;
+      line-height: 1.28;
+      color: #38a536;
+      letter-spacing: 0.23px;
+      word-break: break-word;
+      max-width: 38em;
+    }
+    .footer .footer-line {
+      margin-bottom: 0.5em;
+    }
+    .footer .footer-email {
+      color: #b6c7b6;
       text-decoration: none;
-      font-weight: 600;
-      display: inline-block;
-      margin: 0.3em 0;
-      transition: color 0.2s;
+      font-weight: 300;
+      margin-left: 9px;
     }
-    .contact a:hover, .contact a:focus {
-      color: #314D3A;
-    }
-
-    /* MOBILE: Bigger font, wider use of space */
-    @media (max-width: 600px) {
-      body {
-        align-items: flex-start;
-        justify-content: flex-start;
-        background: #F8F9FA;
-      }
+    @media (max-width: 900px) {
       .container {
-        max-width: 99vw;
-        padding: 2.2rem 3vw 2rem 3vw;
-        margin: 2vw auto;
-        border-radius: 15px;
+        padding: 3vw 3vw 7vw 3vw;
       }
-      h1 {
-        font-size: 2rem;
-        letter-spacing: 0.03em;
+      .main-title,
+      .return-section {
+        font-size: 3.2em;
+        max-width: 100vw;
       }
-      .subtitle {
-        font-size: 1.17rem;
+      .list {
+        max-width: 94vw;
       }
-      ul {
-        font-size: 1.13rem;
-        line-height: 1.7;
+      .list-item {
+        font-size: 2em;
+        padding-left: 2em;
       }
-      .abv {
+      .footer {
+        font-size: 2.2em;
+        max-width: 98vw;
+      }
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 2vw 2vw 6vw 2vw;
+      }
+      .main-title,
+      .return-section {
+        font-size: 3.7em;
+        margin-bottom: 0.6em;
+      }
+      .percent, .percent2 {
         font-size: 1em;
+        margin: 0 10px;
       }
-      .contact {
-        font-size: 1.07rem;
-        padding: 1em 0.6em;
+      .list-item {
+        font-size: 2.4em;
+        margin-bottom: 0.46em;
+        padding-left: 2.4em;
+      }
+      .footer {
+        font-size: 2.5em;
+        margin-top: 2.5em;
       }
     }
     @media (max-width: 400px) {
       .container {
-        padding: 1rem 1vw;
+        padding: 2vw 0 4vw 0;
       }
-      h1 {
-        font-size: 1.3rem;
+      .main-title,
+      .return-section {
+        font-size: 2.2em;
+        margin-bottom: 0.18em;
       }
-      .subtitle {
-        font-size: 0.99rem;
-      }
-      ul {
+      .percent, .percent2 {
         font-size: 1em;
+        margin: 0 6px;
       }
-      .contact {
-        font-size: 0.99rem;
-        padding: 0.7em 0.2em;
+      .list-item {
+        font-size: 1.17em;
+      }
+      .footer {
+        font-size: 1.4em;
+        margin-top: 1em;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>ò drinkdatbeer</h1>
-    <div class="subtitle">Rice beers by Dat &mdash; Malmö, Sweden</div>
-    <ul>
-      <li>• Try our <span class="abv">2.2%</span> and <span class="abv">5.3%</span> rice beers, releasing up to <b>200 cans per month</b>.</li>
-      <li>• Find Dat’s beers at <b>Kiosko Import</b>, <b>Karombar</b>, <b>Folköl O DunkaDunka</b>, and at <b>pop-up events around Malmö</b>.</li>
+    <div class="main-title">
+      ölät <span class="percent">2.2%</span> finns att köpa på:
+    </div>
+    <ul class="list">
+      <li class="list-item">Kiosko Import</li>
+      <li class="list-item">Karombar</li>
+      <li class="list-item">Folköl &amp; DunkaDunka</li>
     </ul>
-    <div class="contact">
-      For contact or pre-orders:<br>
-      <a href="mailto:dat@drinkdat.beer">dat@drinkdat.beer</a><br>
-      <a href="tel:0709558025">070 955 80 25</a>
+    <div class="return-section">
+      ölät <span class="percent2">5.3%</span> förväntas komma<br> tillbaka lagom till vintern.
+    </div>
+    <div class="footer">
+      <div class="footer-line">för förfrågningar, du kan</div>
+      <div class="footer-line">
+        skriva till: <a class="footer-email" href="mailto:dat@drinkdat.beer">dat@drinkdat.beer</a>
+      </div>
     </div>
   </div>
 </body>
