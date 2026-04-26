@@ -106,12 +106,6 @@
       font-size: inherit;
       font-weight: inherit;
       margin-left: 0.2em;
-    }
-    .site-footer {
-      margin-top: 4rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid rgba(0, 0, 0, 0.18);
-    }
     @media (max-width: 700px) {
       .container {
         max-width: var(--mobile-maxwidth);
@@ -160,6 +154,34 @@
       }
       .footer-email { font-size: inherit; margin-left: 0.2vw; color: var(--gray);}
     }
+.footer-line {
+  width: min(120px, 30%);
+  height: 1px;
+  background: rgba(0, 0, 0, 0.22);
+  margin: 4rem auto 1.5rem auto;
+}
+
+.site-footer {
+  max-width: 640px;
+  margin: 0 auto 3rem auto;
+  padding: 0 1.25rem;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.site-footer p {
+  margin: 0 0 0.85rem 0;
+}
+
+.site-footer p:last-child {
+  margin-bottom: 0;
+}
+
+.site-footer a {
+  color: inherit;
+  text-underline-offset: 0.15em;
+}
   </style>
 </head>
 <body>
@@ -171,6 +193,15 @@
     </div>
     <div class="spacer"></div>
     <div class="footer">
+    <div class="footer-line"></div>
+
+<footer class="site-footer">
+  <ul>
+    <li>dat is a part of the brewery collective Brewerstreet, located at Norbergsgatan 24, 214 50 Malmö.</li>
+    <li>dat is available on <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">instagram</a>, <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">facebook</a> and <a href="https://substack.com/" target="_blank" rel="noopener noreferrer">substack</a>.</li>
+    <li>dat is currently into <em>Kallocain</em> of Karin Boye and <em>Tutti Fruitte</em> of Annette Vande Gorne.</li>
+  </ul>
+</footer>
     </div>
   </div>
 </body>
