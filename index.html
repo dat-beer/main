@@ -41,9 +41,16 @@
       font-family: "Inter", Arial, Helvetica, sans-serif;
     }
 
-    a {
-      color: inherit;
-    }
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+  text-decoration-thickness: 1px;
+}
+
+    a.phone-link {
+  text-decoration: none;
+}
 
     .container {
       position: relative;
@@ -239,7 +246,9 @@
 <body>
   <div class="container">
     <div class="alltext">
-      Hej, dat*** is a democratic brewery based in Malmö. We have rice beer and wheat beer available at Black Archives Sweden, Dashi, Flax and Kiosko Import. Call us at <a href="tel:+46709558025">0709558025</a> when you want our beers at your spaces.
+      Hej, dat*** is a democratic brewery based in Malmö. We have rice beer and wheat beer available at Black Archives Sweden, Dashi, Flax and Kiosko Import. 
+      <br><br>
+      Call us at <a class="phone-link" href="tel:+46709558025">0709558025</a>
       <br><br>
       We also like book recommendations, music suggestions and social gatherings so share with us via
       <a class="footer-email" href="mailto:dat@drinkdat.beer">dat@drinkdat.beer</a>
