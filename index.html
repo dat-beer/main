@@ -2,232 +2,255 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title> drink dat beer </title>
+  <title>drink dat beer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300&display=swap" rel="stylesheet">
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300&display=swap"
+  >
+
   <style>
     :root {
-      --black: #7d7d7d;
-      --gray: #7d7d7d;
+      --text: #7d7d7d;
+      --muted: #7d7d7d;
       --bg: #dcdcdc;
       --main-size: 48px;
       --mobile-size: 7vw;
-      --mobile-maxwidth: 96vw;
+      --mobile-max-width: 96vw;
+      --footer-rule: rgba(0, 0, 0, 0.16);
+      --footer-note: rgba(0, 0, 0, 0.68);
+      --footer-note-strong: rgba(0, 0, 0, 0.72);
     }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html,
     body {
-      background: var(--bg);
       margin: 0;
-      font-family: 'Inter', Arial, Helvetica, sans-serif;
-      color: var(--black);
-      box-sizing: border-box;
       min-height: 100vh;
-      overflow-x: hidden;
     }
+
+    body {
+      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", Arial, Helvetica, sans-serif;
+    }
+
+    a {
+      color: inherit;
+    }
+
     .container {
-      max-width: 1400px;
-      min-height: 100vh;
-      margin: 0 auto;
-      box-sizing: border-box;
+      position: relative;
       display: flex;
       flex-direction: column;
-      padding: 48px 0 0 48px;
-      position: relative;
+      min-height: 100vh;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 48px 48px 48px 48px;
     }
+
     .alltext {
+      max-width: 26ch;
+      margin: 0 0 32px;
       font-size: var(--main-size);
       font-weight: 300;
       line-height: 1.18;
-      margin-bottom: 32px;
-      color: var(--black);
       letter-spacing: 0.2px;
       text-align: left;
     }
-    .percent, .percent2 {
-      color: var(--gray);
-      font-size: .6em;
-      font-weight: 300;
-      vertical-align: super;
-      margin: 0 2px;
-      letter-spacing: 0.1px;
+
+    .percent,
+    .percent2 {
       position: relative;
+      margin: 0 2px;
+      color: var(--muted);
+      font-size: 0.6em;
+      font-weight: 300;
+      letter-spacing: 0.1px;
+      vertical-align: super;
     }
-    ul.list { 
-      margin-left: 24px;
-      margin-bottom: 48px;
+
+    ul.list {
+      margin: 0 0 48px 24px;
       padding: 0;
       list-style: none;
       text-align: left;
     }
+
     .list-item {
-      font-size: var(--main-size);
-      font-weight: 300;
+      position: relative;
       margin-bottom: 8px;
       padding-left: 36px;
-      line-height: 1.09;
-      position: relative;
-      text-align: left;
-    }
-    .list-item::before {
-      content: "○";
-      color: var(--black);
-      font-size: 38px;
-      position: absolute;
-      left: 0;
-      top: 0.09em;
-      font-weight: 300;
-      font-family: 'Inter', Arial, Helvetica, sans-serif;
-    }
-    .return-section {
       font-size: var(--main-size);
       font-weight: 300;
-      line-height: 1.18;
-      margin-bottom: 40px;
-      color: var(--green);
+      line-height: 1.09;
       text-align: left;
     }
+
+    .list-item::before {
+      content: "○";
+      position: absolute;
+      top: 0.09em;
+      left: 0;
+      color: var(--text);
+      font-family: "Inter", Arial, Helvetica, sans-serif;
+      font-size: 38px;
+      font-weight: 300;
+    }
+
     .spacer {
       flex: 1;
     }
+
     .footer {
-      font-size: var(--main-size);
-      font-weight: 300;
-      color: var(--black);
-      line-height: 1.18;
-      position: absolute;
-      left: 48px;
-      right: 48px;
-      bottom: 48px;
       margin: 0;
       text-align: left;
     }
+
     .footer-email {
-      color: var(--gray);
-      text-decoration: none;
-      font-size: inherit;
-      font-weight: inherit;
       margin-left: 0.2em;
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .footer-email:hover,
+    .footer-email:focus-visible,
+    .footer-notes a:hover,
+    .footer-notes a:focus-visible {
+      text-decoration: underline;
+      text-underline-offset: 0.14em;
+      text-decoration-thickness: 1px;
+    }
+
+    .footer-line {
+      width: min(96px, 24%);
+      height: 1px;
+      margin: 4.5rem auto 1.25rem;
+      background: var(--footer-rule);
+    }
+
+    .site-footer {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    .footer-notes {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .footer-notes li {
+      position: relative;
+      margin-bottom: 0.42rem;
+      padding-left: 0.95rem;
+      color: var(--footer-note);
+      font-size: 0.72rem;
+      line-height: 1.45;
+      letter-spacing: 0.01em;
+    }
+
+    .footer-notes li:last-child {
+      margin-bottom: 0;
+    }
+
+    .footer-notes li::before {
+      content: "*";
+      position: absolute;
+      top: 0;
+      left: 0;
+      color: var(--footer-note-strong);
+    }
+
+    .footer-notes a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 0.14em;
+      text-decoration-thickness: 1px;
+    }
+
+    .footer-notes em {
+      font-style: italic;
+    }
+
     @media (max-width: 700px) {
       .container {
-        max-width: var(--mobile-maxwidth);
         width: 100vw;
         min-height: 100vh;
-        padding: 6vw 0 0 4vw;
-        position: relative;
-        display: flex;
-        flex-direction: column;
+        max-width: var(--mobile-max-width);
+        padding: 6vw 4vw 5vw;
       }
+
       .alltext,
-      .list-item,
-      .return-section {
-        font-size: var(--mobile-size);
+      .list-item {
+        max-width: var(--mobile-max-width);
         margin-bottom: 4vw;
-        max-width: var(--mobile-maxwidth);
-        text-align: left;
+        font-size: var(--mobile-size);
       }
+
       ul.list {
-        margin-left: 0;
-        margin-bottom: 5vw;
+        width: 100%;
+        max-width: var(--mobile-max-width);
+        margin: 0 0 5vw;
         padding: 0;
-        width: 100vw;
-        max-width: var(--mobile-maxwidth);
       }
-      .list-item { 
-        font-size: var(--mobile-size);
-        padding-left: 7vw; 
+
+      .list-item {
         margin-bottom: 3vw;
-        max-width: var(--mobile-maxwidth); 
-        text-align: left;
+        padding-left: 7vw;
       }
-      .list-item::before { font-size: 6vw; }
-      .percent, .percent2 { font-size: 0.5em; vertical-align: super; }
-      .return-section { margin-bottom: 5vw;}
-      .spacer { flex: 1; }
-      .footer {
-        font-size: var(--mobile-size);
-        position: absolute;
-        left: 4vw;
-        right: 0;
-        bottom: 5vw;
-        width: 92vw;
-        text-align: left;
-        margin: 0;
+
+      .list-item::before {
+        font-size: 6vw;
       }
-      .footer-email { font-size: inherit; margin-left: 0.2vw; color: var(--gray);}
+
+      .percent,
+      .percent2 {
+        font-size: 0.5em;
+        vertical-align: super;
+      }
+
+      .footer-line {
+        margin: 14vw auto 5vw;
+      }
+
+      .site-footer {
+        padding: 0;
+      }
+
+      .footer-notes li {
+        font-size: 0.72rem;
+      }
+
+      .footer-email {
+        margin-left: 0.2vw;
+      }
     }
-.footer-line {
-  width: min(96px, 24%);
-  height: 1px;
-  background: rgba(0, 0, 0, 0.16);
-  margin: 4.5rem auto 1.25rem auto;
-}
-
-.site-footer {
-  max-width: 620px;
-  margin: 0 auto 3rem auto;
-  padding: 0 1.25rem;
-}
-
-.footer-notes {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.footer-notes li {
-  position: relative;
-  padding-left: 0.95rem;
-  margin-bottom: 0.42rem;
-  font-size: 0.72rem;
-  line-height: 1.45;
-  letter-spacing: 0.01em;
-  color: rgba(0, 0, 0, 0.68);
-}
-
-.footer-notes li:last-child {
-  margin-bottom: 0;
-}
-
-.footer-notes li::before {
-  content: "*";
-  position: absolute;
-  left: 0;
-  top: 0;
-  color: rgba(0, 0, 0, 0.72);
-}
-
-.footer-notes a {
-  color: inherit;
-  text-decoration: underline;
-  text-underline-offset: 0.14em;
-  text-decoration-thickness: 1px;
-}
-
-.footer-notes em {
-  font-style: italic;
-}
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="alltext">
       Hej, dat*** is a democratic brewery based in Malmö. We have rice beer and wheat beer available Black Archives Sweden, Dashi, Flax and Kiosko Import.
-    <br></br>
-      We like book recommendations, music suggestions and social gatherings. Share with us via<a class="footer-email" href="mailto:dat@drinkdat.beer">dat@drinkdat.beer</a> so we can enjoy together in time.
+      <br><br>
+      We like book recommendations, music suggestions and social gatherings. Share with us via
+      <a class="footer-email" href="mailto:dat@drinkdat.beer">dat@drinkdat.beer</a>
+      so we can enjoy together in time.
     </div>
+
     <div class="spacer"></div>
-    <div class="footer">
-    <div class="footer-line"></div>
 
-<div class="footer-line"></div>
-
-<footer class="site-footer">
-  <ul class="footer-notes">
-    <li>dat is a part of the brewery collective Brewerstreet, located at Norbergsgatan 24, 214 50 Malmö.</li>
-    <li>dat is available on <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">instagram</a>, <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">facebook</a> and <a href="https://substack.com/" target="_blank" rel="noopener noreferrer">substack</a>.</li>
-    <li>dat is currently into <em>Kallocain</em> of Karin Boye and <em>Tutti Fruitte</em> of Annette Vande Gorne.</li>
-  </ul>
-</footer>
-      
+    <div class="footer"></div>
+  
+      </footer>
     </div>
   </div>
 </body>
