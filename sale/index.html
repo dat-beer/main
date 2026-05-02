@@ -1031,42 +1031,155 @@
   </div>
 
   <script>
-    const state = {
-      customers: [],
-      sales: [],
-      stockMovements: [],
-      chart: null,
-      theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
-      db: null
+    // ---------- utils ----------
+    const utils = {
+      uid(prefix) {
+        return prefix + Math.random().toString(36).slice(2, 10);
+      },
+      formatCurrency(value) {
+        return new Intl.NumberFormat("sv-SE", {
+          style: "currency",
+          currency: "SEK",
+          maximumFractionDigits: 0
+        }).format(Number(value) || 0);
+      },
+      formatNumber(value, digits = 0) {
+        return new Intl.NumberFormat("sv-SE", {
+          maximumFractionDigits: digits,
+          minimumFractionDigits: digits
+        }).format(Number(value) || 0);
+      },
+      toNumber(value, fallback = 0) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : fallback;
+      },
+      escapeHtml(str) {
+        return (str || "").replace(/[&<>"']/g, tag => {
+          const chars = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+          };
+          return chars[tag] || tag;
+        });
+      }
     };
 
+    // ---------- converters ----------
+    const converters = {
+      litersFromStockRow(row) {
+        const qty = utils.toNumber(row.quantity);
+        if (row.sku === "330ml can") return qty * 0.33;
+        if (row.sku === "30L keg") return qty * 30;
+        return qty;
+      },
+      litersFromSaleProduct(p) {
+        const qty = utils.toNumber(p.quantity);
+        if (p.unit === "cans") return qty * 0.33;
+        if (p.unit === "liters") return qty;
+        if (p.sku === "30L keg") return qty * 30;
+        return qty;
+      }
+    };
+
+    // ---------- state + persistence ----------
     const STORAGE = {
       dbName: "dat-sales-db",
       store: "appState",
       key: "main"
     };
 
-    const AUTH = {
-      username: "dat",
-      password: "dat"
+    const state = {
+      customers: [],
+      sales: [],
+      stockMovements: [],
+      theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
+      chart: null,
+      db: null
     };
 
+    const store = {
+      openDb() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(STORAGE.dbName, 1);
+          req.onupgradeneeded = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains(STORAGE.store)) {
+              db.createObjectStore(STORAGE.store);
+            }
+          };
+          req.onsuccess = () => {
+            state.db = req.result;
+            resolve(req.result);
+          };
+          req.onerror = () => reject(req.error);
+        });
+      },
+      load() {
+        if (!state.db) return Promise.resolve(null);
+        return new Promise((resolve, reject) => {
+          const tx = state.db.transaction(STORAGE.store, "readonly");
+          const s = tx.objectStore(STORAGE.store);
+          const req = s.get(STORAGE.key);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => reject(req.error);
+        });
+      },
+      save() {
+        if (!state.db) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+          const tx = state.db.transaction(STORAGE.store, "readwrite");
+          const s = tx.objectStore(STORAGE.store);
+          s.put(
+            {
+              customers: state.customers,
+              sales: state.sales,
+              stockMovements: state.stockMovements,
+              theme: state.theme,
+              savedAt: new Date().toISOString()
+            },
+            STORAGE.key
+          );
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+      }
+    };
+
+    // ---------- DOM cache ----------
     const els = {
       navButtons: document.querySelectorAll("[data-section-target]"),
       sections: document.querySelectorAll(".section"),
-      title: document.getElementById("pageTitle"),
-      intro: document.getElementById("pageIntro"),
+      pageTitle: document.getElementById("pageTitle"),
+      pageIntro: document.getElementById("pageIntro"),
 
+      kpiRevenue: document.getElementById("kpiRevenue"),
+      kpiRevenueMeta: document.getElementById("kpiRevenueMeta"),
+      kpiVolume: document.getElementById("kpiVolume"),
+      kpiOrders: document.getElementById("kpiOrders"),
+      kpiCustomers: document.getElementById("kpiCustomers"),
+      stockTotalIn: document.getElementById("stockTotalIn"),
+      stockTotalOut: document.getElementById("stockTotalOut"),
+      stockCurrent: document.getElementById("stockCurrent"),
+      recentSalesBody: document.getElementById("recentSalesBody"),
+
+      saleForm: document.getElementById("saleForm"),
       saleCustomer: document.getElementById("saleCustomer"),
       saleDate: document.getElementById("saleDate"),
       saleInvoiceDate: document.getElementById("saleInvoiceDate"),
-      saleForm: document.getElementById("saleForm"),
-      saleFeedback: document.getElementById("saleFeedback"),
+      saleInvoice: document.getElementById("saleInvoice"),
+      saleStatus: document.getElementById("saleStatus"),
+      saleNotes: document.getElementById("saleNotes"),
       saleProducts: document.getElementById("saleProducts"),
+      saleProductsTotal: document.getElementById("saleProductsTotal"),
       addProductRowBtn: document.getElementById("addProductRowBtn"),
+      saleFeedback: document.getElementById("saleFeedback"),
       productNameList: document.getElementById("productNameList"),
 
       stockForm: document.getElementById("stockForm"),
+      stockBySkuBody: document.getElementById("stockBySkuBody"),
       stockFeedback: document.getElementById("stockFeedback"),
 
       customerForm: document.getElementById("customerForm"),
@@ -1074,70 +1187,17 @@
       customerList: document.getElementById("customerList"),
       customerSearch: document.getElementById("customerSearch"),
 
+      downloadDataBtn: document.getElementById("downloadDataBtn"),
       restoreFile: document.getElementById("restoreFile"),
       authOverlay: document.getElementById("authOverlay"),
       loginForm: document.getElementById("loginForm"),
       loginUsername: document.getElementById("loginUsername"),
       loginPassword: document.getElementById("loginPassword"),
-      loginError: document.getElementById("loginError")
+      loginError: document.getElementById("loginError"),
+      themeToggle: document.querySelector("[data-theme-toggle]")
     };
 
-    document.documentElement.setAttribute("data-theme", state.theme);
-    const todayStr = new Date().toISOString().slice(0, 10);
-    els.saleDate.value = todayStr;
-    els.saleInvoiceDate.value = todayStr;
-
-    function openDb() {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open(STORAGE.dbName, 1);
-        req.onupgradeneeded = () => {
-          const db = req.result;
-          if (!db.objectStoreNames.contains(STORAGE.store)) {
-            db.createObjectStore(STORAGE.store);
-          }
-        };
-        req.onsuccess = () => {
-          state.db = req.result;
-          resolve(req.result);
-        };
-        req.onerror = () => reject(req.error);
-      });
-    }
-
-    function loadPersistedState() {
-      return new Promise((resolve, reject) => {
-        if (!state.db) {
-          resolve(null);
-          return;
-        }
-        const tx = state.db.transaction(STORAGE.store, "readonly");
-        const store = tx.objectStore(STORAGE.store);
-        const req = store.get(STORAGE.key);
-        req.onsuccess = () => resolve(req.result || null);
-        req.onerror = () => reject(req.error);
-      });
-    }
-
-    function savePersistedState() {
-      if (!state.db) return Promise.resolve();
-      return new Promise((resolve, reject) => {
-        const tx = state.db.transaction(STORAGE.store, "readwrite");
-        const store = tx.objectStore(STORAGE.store);
-        store.put(
-          {
-            customers: state.customers,
-            sales: state.sales,
-            stockMovements: state.stockMovements,
-            theme: state.theme,
-            savedAt: new Date().toISOString()
-          },
-          STORAGE.key
-        );
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
-    }
-
+    // ---------- UI helpers ----------
     const pageCopy = {
       dashboard: {
         title: "Dashboard",
@@ -1157,28 +1217,9 @@
       }
     };
 
-    function formatCurrency(value) {
-      return new Intl.NumberFormat("sv-SE", {
-        style: "currency",
-        currency: "SEK",
-        maximumFractionDigits: 0
-      }).format(value || 0);
-    }
-
-    function formatNumber(value, digits = 0) {
-      return new Intl.NumberFormat("sv-SE", {
-        maximumFractionDigits: digits,
-        minimumFractionDigits: digits
-      }).format(value || 0);
-    }
-
-    function showStatus(el, text, kind) {
+    function setStatus(el, text, kind) {
       el.textContent = text;
       el.className = "status " + kind;
-    }
-
-    function uid(prefix) {
-      return prefix + Math.random().toString(36).slice(2, 10);
     }
 
     function switchSection(id) {
@@ -1189,80 +1230,30 @@
         btn.classList.toggle("active", btn.dataset.sectionTarget === id);
       });
       const copy = pageCopy[id] || pageCopy.dashboard;
-      els.title.textContent = copy.title;
-      els.intro.textContent = copy.intro;
+      els.pageTitle.textContent = copy.title;
+      els.pageIntro.textContent = copy.intro;
     }
-
-    els.navButtons.forEach(btn => {
-      btn.addEventListener("click", () => switchSection(btn.dataset.sectionTarget));
-    });
-
-    document.querySelectorAll("[data-section-jump]").forEach(btn => {
-      btn.addEventListener("click", () => switchSection(btn.dataset.sectionJump));
-    });
-
-    document.querySelector("[data-theme-toggle]").addEventListener("click", () => {
-      state.theme = state.theme === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", state.theme);
-      savePersistedState().catch(() => {});
-    });
 
     function updateCustomerSelect() {
       const selected = els.saleCustomer.value;
       els.saleCustomer.innerHTML = "";
       if (!state.customers.length) {
         const opt = document.createElement("option");
-        opt.textContent = "Add a customer first";
         opt.value = "";
+        opt.textContent = "Add a customer first";
         els.saleCustomer.appendChild(opt);
         return;
       }
       state.customers
         .slice()
         .sort((a, b) => a.name.localeCompare(b.name))
-        .forEach(customer => {
+        .forEach(c => {
           const opt = document.createElement("option");
-          opt.value = customer.id;
-          opt.textContent = customer.name;
-          if (customer.id === selected) opt.selected = true;
+          opt.value = c.id;
+          opt.textContent = c.name;
+          if (c.id === selected) opt.selected = true;
           els.saleCustomer.appendChild(opt);
         });
-    }
-
-    function escapeHtml(str) {
-      return (str || "").replace(/[&<>"']/g, tag => {
-        const chars = {
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;";
-        };
-        return chars[tag] || tag;
-      });
-    }
-
-    function getUniqueStockProducts() {
-      const map = new Map();
-      state.stockMovements.forEach(row => {
-        const key = `${row.productName}||${row.sku}`;
-        if (!map.has(key)) {
-          map.set(key, { name: row.productName, sku: row.sku });
-        }
-      });
-      return Array.from(map.values());
-    }
-
-    function updateProductNameDatalist() {
-      const list = els.productNameList;
-      list.innerHTML = "";
-      const products = getUniqueStockProducts();
-      const names = [...new Set(products.map(p => p.name))].filter(Boolean).sort();
-      names.forEach(name => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        list.appendChild(opt);
-      });
     }
 
     function renderCustomers() {
@@ -1287,7 +1278,7 @@
         .forEach(customer => {
           const revenue = state.sales
             .filter(s => s.customerId === customer.id)
-            .reduce((sum, row) => sum + Number(row.value || 0), 0);
+            .reduce((sum, row) => sum + utils.toNumber(row.value), 0);
           const orders = state.sales.filter(s => s.customerId === customer.id).length;
 
           const div = document.createElement("article");
@@ -1296,8 +1287,8 @@
           div.innerHTML = `
             <div class="inline" style="justify-content: space-between; align-items: flex-start;">
               <div>
-                <strong>${escapeHtml(customer.name)}</strong>
-                <p>${escapeHtml(customer.address) || "No address"}</p>
+                <strong>${utils.escapeHtml(customer.name)}</strong>
+                <p>${utils.escapeHtml(customer.address) || "No address"}</p>
               </div>
               <div class="inline">
                 <span class="pill">orders ${orders}</span>
@@ -1305,54 +1296,29 @@
               </div>
             </div>
             <p>
-              ${customer.contact ? "Contact: " + escapeHtml(customer.contact) + " " : ""}
-              ${customer.phone ? escapeHtml(customer.phone) + " " : ""}
-              ${customer.email ? escapeHtml(customer.email) : ""}
+              ${customer.contact ? "Contact: " + utils.escapeHtml(customer.contact) + " " : ""}
+              ${customer.phone ? utils.escapeHtml(customer.phone) + " " : ""}
+              ${customer.email ? utils.escapeHtml(customer.email) : ""}
             </p>
             <div class="chips-inline">
-              ${customer.vatNumber ? `<span class="chip">Moms: ${escapeHtml(customer.vatNumber)}</span>` : ""}
-              ${customer.orgNumber ? `<span class="chip">Org.nr: ${escapeHtml(customer.orgNumber)}</span>` : ""}
-              <span class="chip">Revenue: ${formatCurrency(revenue)}</span>
+              ${customer.vatNumber ? `<span class="chip">Moms: ${utils.escapeHtml(customer.vatNumber)}</span>` : ""}
+              ${customer.orgNumber ? `<span class="chip">Org.nr: ${utils.escapeHtml(customer.orgNumber)}</span>` : ""}
+              <span class="chip">Revenue: ${utils.formatCurrency(revenue)}</span>
             </div>
           `;
           els.customerList.appendChild(div);
         });
     }
 
-    function litersFromStockRow(row) {
-      const qty = Number(row.quantity || 0);
-      if (row.sku === "330ml can") {
-        return qty * 0.33;
-      }
-      if (row.sku === "30L keg") {
-        return qty * 30;
-      }
-      return qty;
-    }
-
-    function litersFromSaleProduct(p) {
-      const qty = Number(p.quantity || 0);
-      if (p.unit === "cans") {
-        return qty * 0.33;
-      }
-      if (p.unit === "liters") {
-        return qty;
-      }
-      if (p.sku === "30L keg") {
-        return qty * 30;
-      }
-      return qty;
-    }
-
-    function aggregateStock() {
-      const totalsByKey = {};
+    function computeStockSnapshot() {
+      const byKey = {};
       let totalInLiters = 0;
       let totalOutLiters = 0;
 
       state.stockMovements.forEach(row => {
         const key = `${row.productName}||${row.sku}||${row.batch || ""}`;
-        if (!totalsByKey[key]) {
-          totalsByKey[key] = {
+        if (!byKey[key]) {
+          byKey[key] = {
             name: row.productName,
             sku: row.sku,
             batch: row.batch || "",
@@ -1360,33 +1326,28 @@
             outUnits: 0
           };
         }
-        const qty = Number(row.quantity || 0);
+        const qty = utils.toNumber(row.quantity);
         if (row.direction === "in") {
-          totalsByKey[key].inUnits += qty;
+          byKey[key].inUnits += qty;
         } else if (row.direction === "adjust") {
-          if (qty >= 0) {
-            totalsByKey[key].inUnits += qty;
-          } else {
-            totalsByKey[key].outUnits += -qty;
-          }
+          if (qty >= 0) byKey[key].inUnits += qty;
+          else byKey[key].outUnits += -qty;
         }
-        const liters = litersFromStockRow(row);
+
+        const liters = converters.litersFromStockRow(row);
         if (row.direction === "in") {
           totalInLiters += liters;
         } else if (row.direction === "adjust") {
-          if (row.quantity >= 0) {
-            totalInLiters += liters;
-          } else {
-            totalOutLiters += -liters;
-          }
+          if (row.quantity >= 0) totalInLiters += liters;
+          else totalOutLiters += -liters;
         }
       });
 
       state.sales.forEach(sale => {
         (sale.products || []).forEach(p => {
           const key = `${p.productName}||${p.sku}||${p.batch || ""}`;
-          if (!totalsByKey[key]) {
-            totalsByKey[key] = {
+          if (!byKey[key]) {
+            byKey[key] = {
               name: p.productName,
               sku: p.sku,
               batch: p.batch || "",
@@ -1394,124 +1355,122 @@
               outUnits: 0
             };
           }
-          const qty = Number(p.quantity || 0);
-          totalsByKey[key].outUnits += qty;
-          const liters = litersFromSaleProduct(p);
-          totalOutLiters += liters;
+          const qty = utils.toNumber(p.quantity);
+          byKey[key].outUnits += qty;
+          totalOutLiters += converters.litersFromSaleProduct(p);
         });
       });
 
-      const body = document.getElementById("stockBySkuBody");
-      body.innerHTML = "";
+      const currentLiters = totalInLiters - totalOutLiters;
+      return { byKey, totalInLiters, totalOutLiters, currentLiters };
+    }
 
-      const rows = Object.values(totalsByKey);
+    function renderStock() {
+      const { byKey, totalInLiters, totalOutLiters, currentLiters } = computeStockSnapshot();
+
+      els.stockTotalIn.textContent = utils.formatNumber(totalInLiters, 2);
+      els.stockTotalOut.textContent = utils.formatNumber(totalOutLiters, 2);
+      els.stockCurrent.textContent = utils.formatNumber(currentLiters, 2);
+
+      const body = els.stockBySkuBody;
+      body.innerHTML = "";
+      const rows = Object.values(byKey);
       if (!rows.length) {
         body.innerHTML = `<tr><td colspan="7">No stock movements yet.</td></tr>`;
-      } else {
-        rows.forEach(row => {
-          const currentUnits = row.inUnits - row.outUnits;
-          const key = `${row.name}||${row.sku}||${row.batch || ""}`;
-          body.innerHTML += `
-            <tr data-stock-key="${escapeHtml(key)}">
-              <td>${escapeHtml(row.name || "")}</td>
-              <td>${escapeHtml(row.sku || "")}</td>
-              <td>${escapeHtml(row.batch || "")}</td>
-              <td class="mono">${formatNumber(row.inUnits, 2)}</td>
-              <td class="mono">${formatNumber(row.outUnits, 2)}</td>
-              <td class="mono">${formatNumber(currentUnits, 2)}</td>
-              <td>
-                <button class="mini-delete-stock" data-stock-key="${escapeHtml(key)}">Delete stock</button>
-              </td>
-            </tr>
-          `;
-        });
+        return;
       }
 
-      const currentLiters = totalInLiters - totalOutLiters;
-      document.getElementById("stockTotalIn").textContent = formatNumber(totalInLiters, 2);
-      document.getElementById("stockTotalOut").textContent = formatNumber(totalOutLiters, 2);
-      document.getElementById("stockCurrent").textContent = formatNumber(currentLiters, 2);
+      rows.forEach(row => {
+        const currentUnits = row.inUnits - row.outUnits;
+        const key = `${row.name}||${row.sku}||${row.batch || ""}`;
+        body.innerHTML += `
+          <tr data-stock-key="${utils.escapeHtml(key)}">
+            <td>${utils.escapeHtml(row.name || "")}</td>
+            <td>${utils.escapeHtml(row.sku || "")}</td>
+            <td>${utils.escapeHtml(row.batch || "")}</td>
+            <td class="mono">${utils.formatNumber(row.inUnits, 2)}</td>
+            <td class="mono">${utils.formatNumber(row.outUnits, 2)}</td>
+            <td class="mono">${utils.formatNumber(currentUnits, 2)}</td>
+            <td>
+              <button class="mini-delete-stock" data-stock-key="${utils.escapeHtml(key)}">Delete stock</button>
+            </td>
+          </tr>
+        `;
+      });
     }
 
-    function aggregate() {
-      const totals = {
-        revenue: state.sales
-          .filter(row => (row.status || "paid") === "paid")
-          .reduce((sum, row) => sum + Number(row.value || 0), 0),
-        volume: state.sales.reduce(
-          (sum, row) => sum + Number(row.totalVolumeLiters || 0),
-          0
-        ),
-        orders: state.sales.length,
-        activeCustomers: new Set(state.sales.map(row => row.customerId)).size
-      };
+    function renderDashboardKpis() {
+      const paidRevenue = state.sales
+        .filter(row => (row.status || "paid") === "paid")
+        .reduce((sum, row) => sum + utils.toNumber(row.value), 0);
 
-      document.getElementById("kpiRevenue").textContent = formatCurrency(totals.revenue);
-      document.getElementById("kpiVolume").textContent = formatNumber(totals.volume, 1) + " L";
-      document.getElementById("kpiOrders").textContent = formatNumber(totals.orders);
-      document.getElementById("kpiCustomers").textContent = formatNumber(
-        totals.activeCustomers
+      const totalVolumeL = state.sales.reduce(
+        (sum, row) => sum + utils.toNumber(row.totalVolumeLiters),
+        0
       );
+      const orders = state.sales.length;
+      const activeCustomers = new Set(state.sales.map(row => row.customerId)).size;
 
-      document.getElementById("kpiRevenueMeta").textContent = totals.orders
-        ? `${formatCurrency(totals.revenue / totals.orders)} average per order`
+      els.kpiRevenue.textContent = utils.formatCurrency(paidRevenue);
+      els.kpiVolume.textContent = utils.formatNumber(totalVolumeL, 1) + " L";
+      els.kpiOrders.textContent = utils.formatNumber(orders);
+      els.kpiCustomers.textContent = utils.formatNumber(activeCustomers);
+      els.kpiRevenueMeta.textContent = orders
+        ? `${utils.formatCurrency(paidRevenue / orders)} average per order`
         : "No sales yet";
-
-      aggregateStock();
-      updateProductNameDatalist();
     }
 
-    function renderTables() {
-      const recentBody = document.getElementById("recentSalesBody");
-      recentBody.innerHTML = "";
+    function renderRecentSales() {
       const recent = state.sales
         .slice()
         .sort((a, b) => new Date(b.invoiceDate || b.date) - new Date(a.invoiceDate || a.date))
         .slice(0, 20);
 
+      els.recentSalesBody.innerHTML = "";
       if (!recent.length) {
-        recentBody.innerHTML = `<tr><td colspan="7">No sales logged yet.</td></tr>`;
-      } else {
-        recent.forEach(row => {
-          const customer = state.customers.find(c => c.id === row.customerId);
-          const status = row.status || "paid";
-
-          const productsDisplay = (row.products || [])
-            .map(p => {
-              const unit = p.unit === "cans" ? "cans" : "L";
-              return `${escapeHtml(p.productName || "")} — ${escapeHtml(p.batch || "")} — ${formatNumber(
-                p.quantity || 0,
-                0
-              )} ${unit}, ex ${formatCurrency(p.value || 0)}, tax ${formatCurrency(
-                p.tax || 0
-              )}, panta ${formatCurrency(p.panta || 0)}`;
-            })
-            .join("<br>");
-
-          recentBody.innerHTML += `
-            <tr data-sale-id="${row.id}">
-              <td>${row.invoiceDate || row.date || ""}</td>
-              <td>${escapeHtml(customer?.name || "Unknown")}</td>
-              <td>${productsDisplay || ""}</td>
-              <td class="mono">
-                ex: ${formatCurrency(row.value || 0)}<br>
-                tax: ${formatCurrency(row.tax || 0)}<br>
-                panta: ${formatCurrency(row.panta || 0)}
-              </td>
-              <td>
-                <select class="status-select" data-sale-id="${row.id}">
-                  <option value="paid" ${status === "paid" ? "selected" : ""}>Paid</option>
-                  <option value="unpaid" ${status === "unpaid" ? "selected" : ""}>Unpaid</option>
-                </select>
-              </td>
-              <td>${escapeHtml(row.notes || "")}</td>
-              <td>
-                <button class="mini-delete" data-sale-id="${row.id}">Delete</button>
-              </td>
-            </tr>
-          `;
-        });
+        els.recentSalesBody.innerHTML = `<tr><td colspan="7">No sales logged yet.</td></tr>`;
+        return;
       }
+
+      recent.forEach(row => {
+        const customer = state.customers.find(c => c.id === row.customerId);
+        const status = row.status || "paid";
+
+        const productsDisplay = (row.products || [])
+          .map(p => {
+            const unit = p.unit === "cans" ? "cans" : "L";
+            return `${utils.escapeHtml(p.productName || "")} — ${utils.escapeHtml(p.batch || "")} — ${utils.formatNumber(
+              p.quantity || 0,
+              0
+            )} ${unit}, ex ${utils.formatCurrency(p.value || 0)}, tax ${utils.formatCurrency(
+              p.tax || 0
+            )}, panta ${utils.formatCurrency(p.panta || 0)}`;
+          })
+          .join("<br>");
+
+        els.recentSalesBody.innerHTML += `
+          <tr data-sale-id="${row.id}">
+            <td>${row.invoiceDate || row.date || ""}</td>
+            <td>${utils.escapeHtml(customer?.name || "Unknown")}</td>
+            <td>${productsDisplay || ""}</td>
+            <td class="mono">
+              ex: ${utils.formatCurrency(row.value || 0)}<br>
+              tax: ${utils.formatCurrency(row.tax || 0)}<br>
+              panta: ${utils.formatCurrency(row.panta || 0)}
+            </td>
+            <td>
+              <select class="status-select" data-sale-id="${row.id}">
+                <option value="paid" ${status === "paid" ? "selected" : ""}>Paid</option>
+                <option value="unpaid" ${status === "unpaid" ? "selected" : ""}>Unpaid</option>
+              </select>
+            </td>
+            <td>${utils.escapeHtml(row.notes || "")}</td>
+            <td>
+              <button class="mini-delete" data-sale-id="${row.id}">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
     }
 
     function drawChart() {
@@ -1524,15 +1483,10 @@
         if (!key) return;
 
         const status = row.status || "paid";
-        if (!monthly[key]) {
-          monthly[key] = { paid: 0, unpaid: 0 };
-        }
-        const v = Number(row.value || 0);
-        if (status === "paid") {
-          monthly[key].paid += v;
-        } else {
-          monthly[key].unpaid += v;
-        }
+        if (!monthly[key]) monthly[key] = { paid: 0, unpaid: 0 };
+        const value = utils.toNumber(row.value);
+        if (status === "paid") monthly[key].paid += value;
+        else monthly[key].unpaid += value;
       });
 
       const labels = Object.keys(monthly).sort();
@@ -1553,8 +1507,7 @@
 
       if (state.chart) state.chart.destroy();
 
-      const ctx = document.getElementById("salesChart");
-      state.chart = new Chart(ctx, {
+      state.chart = new Chart(document.getElementById("salesChart"), {
         type: "line",
         data: {
           labels,
@@ -1592,19 +1545,16 @@
             legend: { display: true },
             tooltip: {
               callbacks: {
-                label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`
+                label: ctx => `${ctx.dataset.label}: ${utils.formatCurrency(ctx.parsed.y)}`
               }
             }
           },
           scales: {
-            x: {
-              ticks: { color: textColor },
-              grid: { color: gridColor }
-            },
+            x: { ticks: { color: textColor }, grid: { color: gridColor } },
             y: {
               ticks: {
                 color: textColor,
-                callback: value => formatCurrency(value)
+                callback: value => utils.formatCurrency(value)
               },
               grid: { color: gridColor }
             }
@@ -1613,133 +1563,23 @@
       });
     }
 
-    function refresh() {
-      updateCustomerSelect();
-      renderCustomers();
-      aggregate();
-      renderTables();
-      drawChart();
-      savePersistedState().catch(() => {});
+    function recalcProductRow(row) {
+      const value = utils.toNumber(row.querySelector(".prod-value").value);
+      const tax = utils.toNumber(row.querySelector(".prod-tax").value);
+      const panta = utils.toNumber(row.querySelector(".prod-panta").value);
+      row.querySelector(".prod-price").value = (value + tax + panta).toFixed(2);
     }
 
-    function addCustomer(customer) {
-      state.customers.push(customer);
-      refresh();
+    function recalcProductsTotal() {
+      const rows = Array.from(els.saleProducts.querySelectorAll(".product-row"));
+      const sum = rows.reduce((acc, row) => {
+        return acc + utils.toNumber(row.querySelector(".prod-price").value);
+      }, 0);
+      els.saleProductsTotal.textContent = utils.formatCurrency(sum);
     }
-
-    function addSale(sale) {
-      state.sales.push(sale);
-      refresh();
-    }
-
-    function addStockMovement(row) {
-      state.stockMovements.push(row);
-      refresh();
-    }
-
-    function askQuizConfirmation() {
-      const a = Math.floor(Math.random() * 10) + 1;
-      const b = Math.floor(Math.random() * 10) + 1;
-      const answer = prompt(`To confirm deletion, what is ${a} + ${b}?`);
-      if (answer === null) return false;
-      return Number(answer) === a + b;
-    }
-
-    function deleteSaleById(id) {
-      const index = state.sales.findIndex(s => s.id === id);
-      if (index === -1) return;
-      state.sales.splice(index, 1);
-      refresh();
-    }
-
-    function deleteCustomerById(id) {
-      const index = state.customers.findIndex(c => c.id === id);
-      if (index === -1) return;
-      const hasSales = state.sales.some(s => s.customerId === id);
-      const extra = hasSales
-        ? " This customer has related sales; they will remain with 'Unknown' name."
-        : "";
-      const confirmed = askQuizConfirmation();
-      if (!confirmed) return;
-      state.customers.splice(index, 1);
-      refresh();
-      if (extra) alert(extra);
-    }
-
-    function deleteStockByKey(key) {
-      const [name, sku, batch] = key.split("||");
-      const before = state.stockMovements.length;
-      state.stockMovements = state.stockMovements.filter(
-        r => !(r.productName === name && r.sku === sku && (r.batch || "") === (batch || ""))
-      );
-      const removed = before - state.stockMovements.length;
-      if (removed > 0) {
-        refresh();
-      }
-    }
-
-    const recentSalesBodyEl = document.getElementById("recentSalesBody");
-    recentSalesBodyEl.addEventListener("click", event => {
-      const deleteBtn = event.target.closest(".mini-delete");
-      if (deleteBtn) {
-        const saleId = deleteBtn.getAttribute("data-sale-id");
-        if (!saleId) return;
-        const confirmed = askQuizConfirmation();
-        if (!confirmed) return;
-        deleteSaleById(saleId);
-      }
-    });
-
-    recentSalesBodyEl.addEventListener("change", event => {
-      const select = event.target.closest(".status-select");
-      if (!select) return;
-      const saleId = select.getAttribute("data-sale-id");
-      if (!saleId) return;
-      const sale = state.sales.find(s => s.id === saleId);
-      if (!sale) return;
-      sale.status = select.value === "paid" ? "paid" : "unpaid";
-      refresh();
-    });
-
-    document.getElementById("stockBySkuBody").addEventListener("click", event => {
-      const btn = event.target.closest(".mini-delete-stock");
-      if (!btn) return;
-      const key = btn.getAttribute("data-stock-key");
-      if (!key) return;
-      const confirmed = askQuizConfirmation();
-      if (!confirmed) return;
-      deleteStockByKey(key);
-    });
-
-    els.customerList.addEventListener("click", event => {
-      const btn = event.target.closest(".mini-delete-customer");
-      if (!btn) return;
-      const customerId = btn.getAttribute("data-customer-id");
-      if (!customerId) return;
-      deleteCustomerById(customerId);
-    });
-
-    els.customerForm.addEventListener("submit", event => {
-      event.preventDefault();
-      const customer = {
-        id: uid("cust"),
-        name: document.getElementById("customerName").value.trim(),
-        contact: document.getElementById("customerContact").value.trim(),
-        phone: document.getElementById("customerPhone").value.trim(),
-        email: document.getElementById("customerEmail").value.trim(),
-        address: document.getElementById("customerAddress").value.trim(),
-        vatNumber: document.getElementById("customerVat").value.trim(),
-        orgNumber: document.getElementById("customerOrg").value.trim(),
-        createdAt: new Date().toISOString()
-      };
-      if (!customer.name || !customer.address) return;
-      addCustomer(customer);
-      els.customerForm.reset();
-      showStatus(els.customerFeedback, "Customer added", "ok");
-    });
 
     function createProductRow(initial = {}) {
-      const rowId = uid("prod");
+      const rowId = utils.uid("prod");
       const div = document.createElement("div");
       div.className = "product-row";
       div.dataset.rowId = rowId;
@@ -1747,7 +1587,7 @@
         <div class="product-row-grid">
           <label>
             Product name
-            <input type="text" class="prod-name" list="productNameList" placeholder="Dat Lager" value="${escapeHtml(initial.productName || "")}" required>
+            <input type="text" class="prod-name" list="productNameList" placeholder="Dat Lager" value="${utils.escapeHtml(initial.productName || "")}" required>
           </label>
           <label>
             Product SKU / format
@@ -1758,7 +1598,7 @@
           </label>
           <label>
             Batch number
-            <input type="text" class="prod-batch" placeholder="DL-2026-01" value="${escapeHtml(initial.batch || "")}">
+            <input type="text" class="prod-batch" placeholder="DL-2026-01" value="${utils.escapeHtml(initial.batch || "")}">
           </label>
           <label>
             Quantity
@@ -1796,31 +1636,96 @@
       return div;
     }
 
-    function recalcProductRow(row) {
-      const value = Number(row.querySelector(".prod-value").value || 0);
-      const tax = Number(row.querySelector(".prod-tax").value || 0);
-      const panta = Number(row.querySelector(".prod-panta").value || 0);
-      const price = value + tax + panta;
-      const priceInput = row.querySelector(".prod-price");
-      if (priceInput) {
-        priceInput.value = price.toFixed(2);
-      }
+    function gatherSaleProducts() {
+      const rows = Array.from(els.saleProducts.querySelectorAll(".product-row"));
+      return rows
+        .map(row => {
+          const productName = row.querySelector(".prod-name").value.trim();
+          const sku = row.querySelector(".prod-sku").value;
+          const batch = row.querySelector(".prod-batch").value.trim();
+          const quantity = Math.round(utils.toNumber(row.querySelector(".prod-qty").value));
+          const unit = row.querySelector(".prod-unit").value;
+          const value = utils.toNumber(row.querySelector(".prod-value").value);
+          const tax = utils.toNumber(row.querySelector(".prod-tax").value);
+          const panta = utils.toNumber(row.querySelector(".prod-panta").value);
+          const price = value + tax + panta;
+          return { productName, sku, batch, quantity, unit, value, tax, panta, price };
+        })
+        .filter(p => p.productName && p.sku && p.quantity > 0);
     }
 
-    function recalcProductsTotal() {
-      const rows = Array.from(els.saleProducts.querySelectorAll(".product-row"));
-      let sum = 0;
-      rows.forEach(row => {
-        const priceInput = row.querySelector(".prod-price");
-        if (priceInput) {
-          sum += Number(priceInput.value || 0);
-        }
+    function renderProductNameDatalist() {
+      const list = els.productNameList;
+      list.innerHTML = "";
+      const names = [
+        ...new Set(
+          state.stockMovements
+            .map(r => r.productName)
+            .filter(Boolean)
+        )
+      ].sort();
+      names.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        list.appendChild(opt);
       });
-      const totalEl = document.getElementById("saleProductsTotal");
-      if (totalEl) {
-        totalEl.textContent = formatCurrency(sum);
-      }
     }
+
+    function refreshAll() {
+      updateCustomerSelect();
+      renderCustomers();
+      renderStock();
+      renderDashboardKpis();
+      renderRecentSales();
+      drawChart();
+      renderProductNameDatalist();
+      store.save().catch(() => {});
+    }
+
+    function askQuizConfirmation() {
+      const a = Math.floor(Math.random() * 10) + 1;
+      const b = Math.floor(Math.random() * 10) + 1;
+      const answer = prompt(`To confirm deletion, what is ${a} + ${b}?`);
+      if (answer === null) return false;
+      return Number(answer) === a + b;
+    }
+
+    // ---------- events ----------
+    els.navButtons.forEach(btn => {
+      btn.addEventListener("click", () => switchSection(btn.dataset.sectionTarget));
+    });
+
+    document.querySelectorAll("[data-section-jump]").forEach(btn => {
+      btn.addEventListener("click", () => switchSection(btn.dataset.sectionJump));
+    });
+
+    els.themeToggle.addEventListener("click", () => {
+      state.theme = state.theme === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", state.theme);
+      store.save().catch(() => {});
+    });
+
+    els.customerSearch.addEventListener("input", renderCustomers);
+
+    els.customerForm.addEventListener("submit", e => {
+      e.preventDefault();
+      const customer = {
+        id: utils.uid("cust"),
+        name: document.getElementById("customerName").value.trim(),
+        contact: document.getElementById("customerContact").value.trim(),
+        phone: document.getElementById("customerPhone").value.trim(),
+        email: document.getElementById("customerEmail").value.trim(),
+        address: document.getElementById("customerAddress").value.trim(),
+        vatNumber: document.getElementById("customerVat").value.trim(),
+        orgNumber: document.getElementById("customerOrg").value.trim(),
+        createdAt: new Date().toISOString()
+      };
+      if (!customer.name || !customer.address) return;
+      state.customers.push(customer);
+      els.customerForm.reset();
+      setStatus(els.customerFeedback, "Customer added", "ok");
+      refreshAll();
+    });
 
     els.addProductRowBtn.addEventListener("click", () => {
       const row = createProductRow();
@@ -1829,123 +1734,152 @@
       recalcProductsTotal();
     });
 
-    els.saleProducts.addEventListener("click", event => {
-      const btn = event.target.closest("[data-product-row-id]");
+    els.saleProducts.addEventListener("click", e => {
+      const btn = e.target.closest("[data-product-row-id]");
       if (!btn) return;
       const id = btn.getAttribute("data-product-row-id");
-      const rowEl = els.saleProducts.querySelector(`[data-row-id="${id}"]`);
-      if (rowEl) rowEl.remove();
+      const row = els.saleProducts.querySelector(`[data-row-id="${id}"]`);
+      if (row) row.remove();
       recalcProductsTotal();
     });
 
-    els.saleProducts.addEventListener("input", event => {
-      const row = event.target.closest(".product-row");
+    els.saleProducts.addEventListener("input", e => {
+      const row = e.target.closest(".product-row");
       if (!row) return;
       if (
-        event.target.classList.contains("prod-value") ||
-        event.target.classList.contains("prod-tax") ||
-        event.target.classList.contains("prod-panta")
+        e.target.classList.contains("prod-value") ||
+        e.target.classList.contains("prod-tax") ||
+        e.target.classList.contains("prod-panta")
       ) {
         recalcProductRow(row);
         recalcProductsTotal();
       }
     });
 
-    function gatherSaleProducts() {
-      const rows = Array.from(els.saleProducts.querySelectorAll(".product-row"));
-      return rows
-        .map(row => {
-          const name = row.querySelector(".prod-name").value.trim();
-          const sku = row.querySelector(".prod-sku").value;
-          const batch = row.querySelector(".prod-batch").value.trim();
-          const qty = Math.round(Number(row.querySelector(".prod-qty").value || 0));
-          const unit = row.querySelector(".prod-unit").value;
-          const value = Number(row.querySelector(".prod-value").value || 0);
-          const tax = Number(row.querySelector(".prod-tax").value || 0);
-          const panta = Number(row.querySelector(".prod-panta").value || 0);
-          const price = value + tax + panta;
-          return { productName: name, sku, batch, quantity: qty, unit, value, tax, panta, price };
-        })
-        .filter(p => p.productName && p.sku && p.quantity > 0);
-    }
-
-    els.saleForm.addEventListener("submit", event => {
-      event.preventDefault();
+    els.saleForm.addEventListener("submit", e => {
+      e.preventDefault();
       if (!state.customers.length) {
-        showStatus(els.saleFeedback, "Add a customer first", "warn");
+        setStatus(els.saleFeedback, "Add a customer first", "warn");
         return;
       }
 
       const products = gatherSaleProducts();
       if (!products.length) {
-        showStatus(els.saleFeedback, "Add at least one product row", "warn");
+        setStatus(els.saleFeedback, "Add at least one product row", "warn");
         return;
       }
 
-      const totalVolumeLiters = products.reduce((sum, p) => {
-        return sum + litersFromSaleProduct(p);
-      }, 0);
-
-      const totalValueEx = products.reduce((sum, p) => sum + (p.value || 0), 0);
-      const totalTax = products.reduce((sum, p) => sum + (p.tax || 0), 0);
-      const totalPanta = products.reduce((sum, p) => sum + (p.panta || 0), 0);
+      const totalVolumeLiters = products.reduce(
+        (sum, p) => sum + converters.litersFromSaleProduct(p),
+        0
+      );
+      const totalValueEx = products.reduce((sum, p) => sum + p.value, 0);
+      const totalTax = products.reduce((sum, p) => sum + p.tax, 0);
+      const totalPanta = products.reduce((sum, p) => sum + p.panta, 0);
       const invoiceTotal = totalValueEx + totalTax + totalPanta;
 
       const sale = {
-        id: uid("sale"),
-        customerId: document.getElementById("saleCustomer").value,
-        date: document.getElementById("saleDate").value,
-        invoiceDate: document.getElementById("saleInvoiceDate").value,
-        invoice: document.getElementById("saleInvoice").value.trim(),
+        id: utils.uid("sale"),
+        customerId: els.saleCustomer.value,
+        date: els.saleDate.value,
+        invoiceDate: els.saleInvoiceDate.value,
+        invoice: els.saleInvoice.value.trim(),
         value: totalValueEx,
         tax: totalTax,
         panta: totalPanta,
         invoiceTotal,
-        status: document.getElementById("saleStatus").value || "unpaid",
+        status: els.saleStatus.value || "unpaid",
         products,
         totalVolumeLiters,
-        notes: document.getElementById("saleNotes").value.trim(),
+        notes: els.saleNotes.value.trim(),
         createdAt: new Date().toISOString()
       };
 
-      addSale(sale);
+      state.sales.push(sale);
+
       els.saleForm.reset();
-      els.saleDate.value = todayStr;
-      els.saleInvoiceDate.value = todayStr;
+      const today = new Date().toISOString().slice(0, 10);
+      els.saleDate.value = today;
+      els.saleInvoiceDate.value = today;
       els.saleProducts.innerHTML = "";
       const firstRow = createProductRow();
       els.saleProducts.appendChild(firstRow);
       recalcProductRow(firstRow);
       recalcProductsTotal();
-      updateCustomerSelect();
-      showStatus(els.saleFeedback, "Sale saved", "ok");
+      setStatus(els.saleFeedback, "Sale saved", "ok");
+      refreshAll();
       switchSection("dashboard");
     });
 
-    els.stockForm.addEventListener("submit", event => {
-      event.preventDefault();
+    els.stockForm.addEventListener("submit", e => {
+      e.preventDefault();
       const row = {
-        id: uid("stock"),
+        id: utils.uid("stock"),
         productName: document.getElementById("stockProductName").value.trim(),
         sku: document.getElementById("stockSku").value,
-        quantity: Number(document.getElementById("stockQty").value || 0),
+        quantity: utils.toNumber(document.getElementById("stockQty").value),
         batch: document.getElementById("stockBatch").value.trim(),
         direction: document.getElementById("stockDirection").value,
         notes: document.getElementById("stockNotes").value.trim(),
         createdAt: new Date().toISOString()
       };
       if (!row.productName || !row.sku || !row.quantity) {
-        showStatus(els.stockFeedback, "Fill product name, SKU, and quantity", "warn");
+        setStatus(els.stockFeedback, "Fill product name, SKU, and quantity", "warn");
         return;
       }
-      addStockMovement(row);
+      state.stockMovements.push(row);
       els.stockForm.reset();
-      showStatus(els.stockFeedback, "Stock row saved", "ok");
+      setStatus(els.stockFeedback, "Stock row saved", "ok");
+      refreshAll();
     });
 
-    els.customerSearch.addEventListener("input", renderCustomers);
+    els.customerList.addEventListener("click", e => {
+      const btn = e.target.closest(".mini-delete-customer");
+      if (!btn) return;
+      const id = btn.getAttribute("data-customer-id");
+      if (!id) return;
+      const hasSales = state.sales.some(s => s.customerId === id);
+      const extra = hasSales
+        ? " This customer has related sales; they will remain with 'Unknown' name."
+        : "";
+      if (!askQuizConfirmation()) return;
+      state.customers = state.customers.filter(c => c.id !== id);
+      refreshAll();
+      if (extra) alert(extra);
+    });
 
-    function exportJson() {
+    els.stockBySkuBody.addEventListener("click", e => {
+      const btn = e.target.closest(".mini-delete-stock");
+      if (!btn) return;
+      const key = btn.getAttribute("data-stock-key");
+      if (!key || !askQuizConfirmation()) return;
+      const [name, sku, batch] = key.split("||");
+      state.stockMovements = state.stockMovements.filter(
+        r => !(r.productName === name && r.sku === sku && (r.batch || "") === (batch || ""))
+      );
+      refreshAll();
+    });
+
+    els.recentSalesBody.addEventListener("click", e => {
+      const btn = e.target.closest(".mini-delete");
+      if (!btn) return;
+      const id = btn.getAttribute("data-sale-id");
+      if (!id || !askQuizConfirmation()) return;
+      state.sales = state.sales.filter(s => s.id !== id);
+      refreshAll();
+    });
+
+    els.recentSalesBody.addEventListener("change", e => {
+      const select = e.target.closest(".status-select");
+      if (!select) return;
+      const id = select.getAttribute("data-sale-id");
+      const sale = state.sales.find(s => s.id === id);
+      if (!sale) return;
+      sale.status = select.value === "paid" ? "paid" : "unpaid";
+      refreshAll();
+    });
+
+    els.downloadDataBtn.addEventListener("click", () => {
       const payload = JSON.stringify(
         {
           exportedAt: new Date().toISOString(),
@@ -1962,12 +1896,10 @@
       a.download = "beer-sales-backup-" + new Date().toISOString().slice(0, 10) + ".json";
       a.click();
       URL.revokeObjectURL(a.href);
-    }
+    });
 
-    document.getElementById("downloadDataBtn").addEventListener("click", exportJson);
-
-    els.restoreFile.addEventListener("change", async event => {
-      const file = event.target.files[0];
+    els.restoreFile.addEventListener("change", async e => {
+      const file = e.target.files[0];
       if (!file) return;
       try {
         const text = await file.text();
@@ -1977,22 +1909,19 @@
         state.stockMovements = Array.isArray(parsed.stockMovements)
           ? parsed.stockMovements
           : [];
-        refresh();
+        refreshAll();
         switchSection("dashboard");
-      } catch (e) {
+      } catch {
         alert("Restore failed. Check that this is a valid backup file.");
       } finally {
-        event.target.value = "";
+        e.target.value = "";
       }
     });
 
-    function unlockApp() {
-      document.body.classList.remove("locked");
-      els.authOverlay.style.display = "none";
-    }
+    const AUTH = { username: "dat", password: "dat" };
 
-    els.loginForm.addEventListener("submit", event => {
-      event.preventDefault();
+    els.loginForm.addEventListener("submit", e => {
+      e.preventDefault();
       const ok =
         els.loginUsername.value === AUTH.username &&
         els.loginPassword.value === AUTH.password;
@@ -2001,15 +1930,22 @@
         return;
       }
       els.loginError.textContent = "";
-      unlockApp();
-      refresh();
+      document.body.classList.remove("locked");
+      els.authOverlay.style.display = "none";
+      refreshAll();
       switchSection("dashboard");
     });
 
+    // ---------- init ----------
     async function init() {
+      document.documentElement.setAttribute("data-theme", state.theme);
+      const today = new Date().toISOString().slice(0, 10);
+      els.saleDate.value = today;
+      els.saleInvoiceDate.value = today;
+
       try {
-        await openDb();
-        const persisted = await loadPersistedState();
+        await store.openDb();
+        const persisted = await store.load();
         if (persisted) {
           state.customers = Array.isArray(persisted.customers) ? persisted.customers : [];
           state.sales = Array.isArray(persisted.sales) ? persisted.sales : [];
@@ -2021,14 +1957,17 @@
             document.documentElement.setAttribute("data-theme", state.theme);
           }
         }
-      } catch (e) {}
+      } catch {
+        // fall back to in-memory only
+      }
+
       if (!els.saleProducts.children.length) {
         const row = createProductRow();
         els.saleProducts.appendChild(row);
         recalcProductRow(row);
         recalcProductsTotal();
       }
-      refresh();
+      refreshAll();
     }
 
     init();
