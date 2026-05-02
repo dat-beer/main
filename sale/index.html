@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>dat sales</title>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
   <link href="https://api.fontshare.com/v2/css?f=satoshi@400,500,700,900&display=swap" rel="stylesheet">
-
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
 
   <style>
@@ -177,34 +174,6 @@
       overflow: auto;
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-    }
-
-    .logo {
-      min-width: 96px;
-      height: 42px;
-      border-radius: 999px;
-      background: var(--color-primary);
-      color: var(--color-text-inverse);
-      display: grid;
-      place-items: center;
-      padding-inline: 0.35rem;
-      box-shadow: none;
-    }
-
-    .brand h1 {
-      font-size: var(--text-lg);
-      line-height: 1.1;
-    }
-
-    .brand p {
-      font-size: var(--text-xs);
-      color: var(--color-text-muted);
-    }
-
     .nav {
       display: grid;
       gap: var(--space-2);
@@ -230,8 +199,7 @@
       gap: var(--space-3);
     }
 
-    .theme-toggle,
-    .ghost-btn {
+    .theme-toggle {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -535,7 +503,8 @@
       font-variant-numeric: tabular-nums lining-nums;
     }
 
-    .mini-delete {
+    .mini-delete,
+    .mini-delete-customer {
       font-size: var(--text-xs);
       padding: 0.25rem 0.6rem;
       border-radius: var(--radius-full);
@@ -545,11 +514,11 @@
       white-space: nowrap;
     }
 
-    .mini-delete:hover {
+    .mini-delete:hover,
+    .mini-delete-customer:hover {
       background: color-mixin(oklab, var(--color-error) 8%, var(--color-surface));
     }
 
-    /* Auth overlay */
     .auth-overlay {
       position: fixed;
       inset: 0;
@@ -641,7 +610,6 @@
   </style>
 </head>
 <body class="locked">
-  <!-- Auth overlay -->
   <section class="auth-overlay" id="authOverlay">
     <div class="auth-card">
       <div>
@@ -665,18 +633,6 @@
 
   <div class="app">
     <aside class="sidebar">
-      <div class="brand">
-        <div class="logo" aria-hidden="true">
-          <svg viewBox="0 0 160 52" width="82" height="26" fill="currentColor" aria-label="dat logo">
-            <text x="6" y="36" font-size="34" font-family="Satoshi, sans-serif" font-weight="900" letter-spacing="-2">dat</text>
-          </svg>
-        </div>
-        <div>
-          <h1>dat sales</h1>
-          <p>Trade customer log</p>
-        </div>
-      </div>
-
       <nav class="nav" aria-label="Primary">
         <button class="active" data-section-target="dashboard">Dashboard</button>
         <button data-section-target="sales">Register sale</button>
@@ -687,7 +643,6 @@
         <button class="theme-toggle" data-theme-toggle aria-label="Switch theme">
           Theme
         </button>
-        <button class="ghost-btn" id="seedDemo">Load demo data</button>
       </div>
     </aside>
 
@@ -707,7 +662,6 @@
         </div>
       </header>
 
-      <!-- Dashboard -->
       <section id="dashboard" class="section active">
         <div class="grid kpis">
           <article class="card">
@@ -795,7 +749,6 @@
         </article>
       </section>
 
-      <!-- Register sale -->
       <section id="sales" class="section">
         <article class="card">
           <div class="panel-title">
@@ -850,7 +803,6 @@
         </article>
       </section>
 
-      <!-- Customers -->
       <section id="customers" class="section">
         <div class="grid split">
           <article class="card">
@@ -1135,14 +1087,16 @@
 
           const div = document.createElement("article");
           div.className = "customer-item";
+          div.dataset.customerId = customer.id;
           div.innerHTML = `
             <div class="inline" style="justify-content: space-between; align-items: flex-start;">
               <div>
                 <strong>${escapeHtml(customer.name)}</strong>
                 <p>${escapeHtml(customer.address) || "No address"}</p>
               </div>
-              <div>
+              <div class="inline">
                 <span class="pill">orders ${orders}</span>
+                <button class="mini-delete-customer" data-customer-id="${customer.id}">Delete</button>
               </div>
             </div>
             <p>${customer.contact ? "Contact: " + escapeHtml(customer.contact) : ""} ${customer.phone ? escapeHtml(customer.phone) : ""} ${customer.email ? escapeHtml(customer.email) : ""}</p>
@@ -1334,7 +1288,7 @@
     function askQuizConfirmation() {
       const a = Math.floor(Math.random() * 10) + 1;
       const b = Math.floor(Math.random() * 10) + 1;
-      const answer = prompt(`Delete sale? To confirm, what is ${a} + ${b}?`);
+      const answer = prompt(`To confirm deletion, what is ${a} + ${b}?`);
       if (answer === null) return false;
       return Number(answer) === a + b;
     }
@@ -1346,6 +1300,20 @@
       refresh();
     }
 
+    function deleteCustomerById(id) {
+      const index = state.customers.findIndex(c => c.id === id);
+      if (index === -1) return;
+      const hasSales = state.sales.some(s => s.customerId === id);
+      const extra = hasSales
+        ? " This customer has related sales; they will remain with 'Unknown' name."
+        : "";
+      const confirmed = askQuizConfirmation();
+      if (!confirmed) return;
+      state.customers.splice(index, 1);
+      refresh();
+      if (extra) alert(extra);
+    }
+
     const recentSalesBodyEl = document.getElementById("recentSalesBody");
     recentSalesBodyEl.addEventListener("click", event => {
       const btn = event.target.closest(".mini-delete");
@@ -1355,6 +1323,14 @@
       const confirmed = askQuizConfirmation();
       if (!confirmed) return;
       deleteSaleById(saleId);
+    });
+
+    els.customerList.addEventListener("click", event => {
+      const btn = event.target.closest(".mini-delete-customer");
+      if (!btn) return;
+      const customerId = btn.getAttribute("data-customer-id");
+      if (!customerId) return;
+      deleteCustomerById(customerId);
     });
 
     els.customerForm.addEventListener("submit", event => {
@@ -1382,7 +1358,7 @@
       }
 
       const rawVolume = Number(document.getElementById("saleVolume").value || 0);
-      const unit = document.getElementById("saleUnit").value; // "liters" or "cans"
+      const unit = document.getElementById("saleUnit").value;
       const volumeLiters = unit === "cans" ? rawVolume / 3 : rawVolume;
 
       const sale = {
@@ -1446,109 +1422,6 @@
       }
     });
 
-    document.getElementById("seedDemo").addEventListener("click", () => {
-      state.customers = [
-        {
-          id: "cust1",
-          name: "Möllan Taproom",
-          address: "Bergsgatan 10, Malmö",
-          contact: "Sara",
-          phone: "070100200",
-          email: "sara@mollan.se",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "cust2",
-          name: "Dockside Bistro",
-          address: "Nordensköldsgatan 24, Malmö",
-          contact: "Lukas",
-          phone: "070200300",
-          email: "order@dockside.se",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "cust3",
-          name: "Lund Craft Corner",
-          address: "Stora Södergatan 14, Lund",
-          contact: "Emma",
-          phone: "070300400",
-          email: "emma@craftcorner.se",
-          createdAt: new Date().toISOString()
-        }
-      ];
-
-      state.sales = [
-        {
-          id: "sale1",
-          customerId: "cust1",
-          date: "2026-02-11",
-          beer: "Pilsner 30L keg",
-          invoice: "INV-001",
-          volume: 30,
-          unit: "liters",
-          rawVolume: 30,
-          value: 1560,
-          notes: "Weekly refill",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "sale2",
-          customerId: "cust1",
-          date: "2026-03-09",
-          beer: "Pilsner 30L keg",
-          invoice: "INV-008",
-          volume: 30,
-          unit: "liters",
-          rawVolume: 30,
-          value: 1560,
-          notes: "Tap reset",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "sale3",
-          customerId: "cust2",
-          date: "2026-03-14",
-          beer: "Hazy IPA 20L keg",
-          invoice: "INV-010",
-          volume: 20,
-          unit: "liters",
-          rawVolume: 20,
-          value: 1420,
-          notes: "Seasonal line",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "sale4",
-          customerId: "cust3",
-          date: "2026-04-03",
-          beer: "Mixed cans 48x330ml",
-          invoice: "INV-013",
-          volume: 15.8,
-          unit: "liters",
-          rawVolume: 48,
-          value: 1980,
-          notes: "Launch order",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "sale5",
-          customerId: "cust2",
-          date: "2026-04-22",
-          beer: "Lager 30L keg",
-          invoice: "INV-018",
-          volume: 30,
-          unit: "liters",
-          rawVolume: 30,
-          value: 1490,
-          notes: "Event weekend",
-          createdAt: new Date().toISOString()
-        }
-      ];
-
-      refresh();
-      switchSection("dashboard");
-    });
-
     function unlockApp() {
       document.body.classList.remove("locked");
       els.authOverlay.style.display = "none";
@@ -1581,9 +1454,7 @@
             document.documentElement.setAttribute("data-theme", state.theme);
           }
         }
-      } catch (e) {
-        // ignore, app still works in-memory
-      }
+      } catch (e) {}
       refresh();
     }
 
