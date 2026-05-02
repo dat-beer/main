@@ -19,7 +19,7 @@
       --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
 
       --space-1: 0.25rem;
-      --space-2: 0.0.5rem;
+      --space-2: 0.5rem;
       --space-3: 0.75rem;
       --space-4: 1rem;
       --space-5: 1.25rem;
@@ -603,7 +603,7 @@
 
     .product-row-grid {
       display: grid;
-      grid-template-columns: repeat(7, minmax(0, 1fr));
+      grid-template-columns: repeat(8, minmax(0, 1fr));
       gap: var(--space-3);
     }
 
@@ -732,7 +732,7 @@
       <section id="dashboard" class="section active">
         <div class="grid kpis">
           <article class="card">
-            <h3>Total revenue (paid)</h3>
+            <h3>Total revenue (paid, ex tax & panta)</h3>
             <div class="metric mono" id="kpiRevenue">0 kr</div>
             <p class="meta" id="kpiRevenueMeta">No sales yet</p>
           </article>
@@ -758,7 +758,7 @@
             <div class="panel-title">
               <div>
                 <h3>Revenue over time</h3>
-                <p class="mini">Paid vs unpaid by month (invoice date)</p>
+                <p class="mini">Paid vs unpaid by month (invoice date, ex tax & panta)</p>
               </div>
               <div>
                 <span class="pill" id="chartWindowLabel">All months</span>
@@ -859,6 +859,12 @@
             </label>
 
             <div id="saleProducts" class="product-rows"></div>
+
+            <div class="inline" style="justify-content: flex-end; margin-top: 0.5rem;">
+              <span class="mini">Total invoice (sum of product prices):</span>
+              <strong class="mono" id="saleProductsTotal">0 kr</strong>
+            </div>
+
             <button type="button" class="btn btn-ghost" id="addProductRowBtn">+ Add product row</button>
 
             <label>
@@ -1470,7 +1476,7 @@
           labels,
           datasets: [
             {
-              label: "Paid revenue",
+              label: "Paid revenue (ex tax & panta)",
               data: paidValues,
               borderColor: primary,
               backgroundColor: highlight,
@@ -1482,7 +1488,7 @@
               borderDash: []
             },
             {
-              label: "Unpaid revenue",
+              label: "Unpaid revenue (ex tax & panta)",
               data: unpaidValues,
               borderColor: unpaidColor,
               backgroundColor: "transparent",
@@ -1664,6 +1670,10 @@
             Panta
             <input type="number" class="prod-panta" step="0.01" min="0" placeholder="0" value="${initial.panta || ""}">
           </label>
+          <label>
+            Price
+            <input type="number" class="prod-price" step="0.01" min="0" placeholder="0" value="0" readonly>
+          </label>
         </div>
         <div class="inline">
           <span class="badge">Row</span>
@@ -1673,8 +1683,37 @@
       return div;
     }
 
+    function recalcProductRow(row) {
+      const value = Number(row.querySelector(".prod-value").value || 0);
+      const tax = Number(row.querySelector(".prod-tax").value || 0);
+      const panta = Number(row.querySelector(".prod-panta").value || 0);
+      const price = value + tax + panta;
+      const priceInput = row.querySelector(".prod-price");
+      if (priceInput) {
+        priceInput.value = price.toFixed(2);
+      }
+    }
+
+    function recalcProductsTotal() {
+      const rows = Array.from(els.saleProducts.querySelectorAll(".product-row"));
+      let sum = 0;
+      rows.forEach(row => {
+        const priceInput = row.querySelector(".prod-price");
+        if (priceInput) {
+          sum += Number(priceInput.value || 0);
+        }
+      });
+      const totalEl = document.getElementById("saleProductsTotal");
+      if (totalEl) {
+        totalEl.textContent = formatCurrency(sum);
+      }
+    }
+
     els.addProductRowBtn.addEventListener("click", () => {
-      els.saleProducts.appendChild(createProductRow());
+      const row = createProductRow();
+      els.saleProducts.appendChild(row);
+      recalcProductRow(row);
+      recalcProductsTotal();
     });
 
     els.saleProducts.addEventListener("click", event => {
@@ -1683,20 +1722,37 @@
       const id = btn.getAttribute("data-product-row-id");
       const rowEl = els.saleProducts.querySelector(`[data-row-id="${id}"]`);
       if (rowEl) rowEl.remove();
+      recalcProductsTotal();
+    });
+
+    els.saleProducts.addEventListener("input", event => {
+      const row = event.target.closest(".product-row");
+      if (!row) return;
+      if (
+        event.target.classList.contains("prod-value") ||
+        event.target.classList.contains("prod-tax") ||
+        event.target.classList.contains("prod-panta")
+      ) {
+        recalcProductRow(row);
+        recalcProductsTotal();
+      }
     });
 
     function gatherSaleProducts() {
       const rows = Array.from(els.saleProducts.querySelectorAll(".product-row"));
-      return rows.map(row => {
-        const name = row.querySelector(".prod-name").value.trim();
-        const sku = row.querySelector(".prod-sku").value.trim();
-        const qty = Math.round(Number(row.querySelector(".prod-qty").value || 0));
-        const unit = row.querySelector(".prod-unit").value;
-        const value = Number(row.querySelector(".prod-value").value || 0);
-        const tax = Number(row.querySelector(".prod-tax").value || 0);
-        const panta = Number(row.querySelector(".prod-panta").value || 0);
-        return { productName: name, sku, quantity: qty, unit, value, tax, panta };
-      }).filter(p => p.productName && p.sku && p.quantity > 0);
+      return rows
+        .map(row => {
+          const name = row.querySelector(".prod-name").value.trim();
+          const sku = row.querySelector(".prod-sku").value.trim();
+          const qty = Math.round(Number(row.querySelector(".prod-qty").value || 0));
+          const unit = row.querySelector(".prod-unit").value;
+          const value = Number(row.querySelector(".prod-value").value || 0);
+          const tax = Number(row.querySelector(".prod-tax").value || 0);
+          const panta = Number(row.querySelector(".prod-panta").value || 0);
+          const price = value + tax + panta;
+          return { productName: name, sku, quantity: qty, unit, value, tax, panta, price };
+        })
+        .filter(p => p.productName && p.sku && p.quantity > 0);
     }
 
     els.saleForm.addEventListener("submit", event => {
@@ -1720,6 +1776,7 @@
       const totalValueEx = products.reduce((sum, p) => sum + (p.value || 0), 0);
       const totalTax = products.reduce((sum, p) => sum + (p.tax || 0), 0);
       const totalPanta = products.reduce((sum, p) => sum + (p.panta || 0), 0);
+      const invoiceTotal = totalValueEx + totalTax + totalPanta;
 
       const sale = {
         id: uid("sale"),
@@ -1727,9 +1784,10 @@
         date: document.getElementById("saleDate").value,
         invoiceDate: document.getElementById("saleInvoiceDate").value,
         invoice: document.getElementById("saleInvoice").value.trim(),
-        value: totalValueEx,
+        value: totalValueEx,   // ex tax & panta
         tax: totalTax,
         panta: totalPanta,
+        invoiceTotal,
         status: document.getElementById("saleStatus").value || "unpaid",
         products,
         totalVolumeLiters,
@@ -1742,6 +1800,10 @@
       els.saleDate.value = todayStr;
       els.saleInvoiceDate.value = todayStr;
       els.saleProducts.innerHTML = "";
+      const firstRow = createProductRow();
+      els.saleProducts.appendChild(firstRow);
+      recalcProductRow(firstRow);
+      recalcProductsTotal();
       updateCustomerSelect();
       showStatus(els.saleFeedback, "Sale saved", "ok");
       switchSection("dashboard");
@@ -1848,7 +1910,10 @@
         }
       } catch (e) {}
       if (!els.saleProducts.children.length) {
-        els.saleProducts.appendChild(createProductRow());
+        const row = createProductRow();
+        els.saleProducts.appendChild(row);
+        recalcProductRow(row);
+        recalcProductsTotal();
       }
       refresh();
     }
