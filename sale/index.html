@@ -510,7 +510,8 @@
     }
 
     .mini-delete,
-    .mini-delete-customer {
+    .mini-delete-customer,
+    .mini-delete-stock {
       font-size: var(--text-xs);
       padding: 0.25rem 0.6rem;
       border-radius: var(--radius-full);
@@ -521,7 +522,8 @@
     }
 
     .mini-delete:hover,
-    .mini-delete-customer:hover {
+    .mini-delete-customer:hover,
+    .mini-delete-stock:hover {
       background: color-mixin(oklab, var(--color-error) 8%, var(--color-surface));
     }
 
@@ -858,6 +860,12 @@
               <span class="help">Each row is one product / SKU / format with its own quantity, unit, value, tax, and panta.</span>
             </label>
 
+            <datalist id="productNameList"></datalist>
+            <datalist id="productSkuList">
+              <option value="330ml can"></option>
+              <option value="30L keg"></option>
+            </datalist>
+
             <div id="saleProducts" class="product-rows"></div>
 
             <div class="inline" style="justify-content: flex-end; margin-top: 0.5rem;">
@@ -896,7 +904,10 @@
               </label>
               <label>
                 Product SKU / format
-                <input id="stockSku" type="text" placeholder="33cl can, 30L keg" required>
+                <select id="stockSku" required>
+                  <option value="330ml can">330ml can</option>
+                  <option value="30L keg">30L keg</option>
+                </select>
               </label>
               <label>
                 Quantity (in units)
@@ -941,6 +952,7 @@
                   <th>Total in</th>
                   <th>Total out</th>
                   <th>Current</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="stockBySkuBody"></tbody>
@@ -1051,6 +1063,7 @@
       saleFeedback: document.getElementById("saleFeedback"),
       saleProducts: document.getElementById("saleProducts"),
       addProductRowBtn: document.getElementById("addProductRowBtn"),
+      productNameList: document.getElementById("productNameList"),
 
       stockForm: document.getElementById("stockForm"),
       stockFeedback: document.getElementById("stockFeedback"),
@@ -1163,10 +1176,6 @@
       el.className = "status " + kind;
     }
 
-    function hideStatus(el) {
-      el.className = "status hidden";
-    }
-
     function uid(prefix) {
       return prefix + Math.random().toString(36).slice(2, 10);
     }
@@ -1232,6 +1241,29 @@
       });
     }
 
+    function getUniqueStockProducts() {
+      const map = new Map();
+      state.stockMovements.forEach(row => {
+        const key = `${row.productName}||${row.sku}`;
+        if (!map.has(key)) {
+          map.set(key, { name: row.productName, sku: row.sku });
+        }
+      });
+      return Array.from(map.values());
+    }
+
+    function updateProductNameDatalist() {
+      const list = els.productNameList;
+      list.innerHTML = "";
+      const products = getUniqueStockProducts();
+      const names = [...new Set(products.map(p => p.name))].filter(Boolean).sort();
+      names.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        list.appendChild(opt);
+      });
+    }
+
     function renderCustomers() {
       const q = els.customerSearch.value.trim().toLowerCase();
       const filtered = state.customers.filter(c =>
@@ -1294,8 +1326,9 @@
       state.stockMovements.forEach(row => {
         const key = `${row.productName}||${row.sku}`;
         if (!totalsByKey[key]) {
-          totalsByKey[key] = { name: row.productName, sku: row.sku, in: 0, out: 0 };
+          totalsByKey[key] = { name: row.productName, sku: row.sku, in: 0, out: 0, stockIds: new Set() };
         }
+        totalsByKey[key].stockIds.add(row.id);
         if (row.direction === "in") {
           totalsByKey[key].in += Number(row.quantity || 0);
           totalIn += Number(row.quantity || 0);
@@ -1315,7 +1348,7 @@
         (sale.products || []).forEach(p => {
           const key = `${p.productName}||${p.sku}`;
           if (!totalsByKey[key]) {
-            totalsByKey[key] = { name: p.productName, sku: p.sku, in: 0, out: 0 };
+            totalsByKey[key] = { name: p.productName, sku: p.sku, in: 0, out: 0, stockIds: new Set() };
           }
           const qty = Number(p.quantity || 0);
           totalsByKey[key].out += qty;
@@ -1328,17 +1361,21 @@
 
       const rows = Object.values(totalsByKey);
       if (!rows.length) {
-        body.innerHTML = `<tr><td colspan="5">No stock movements yet.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6">No stock movements yet.</td></tr>`;
       } else {
         rows.forEach(row => {
           const current = row.in - row.out;
+          const key = `${row.name}||${row.sku}`;
           body.innerHTML += `
-            <tr>
+            <tr data-stock-key="${escapeHtml(key)}">
               <td>${escapeHtml(row.name || "")}</td>
               <td>${escapeHtml(row.sku || "")}</td>
               <td class="mono">${formatNumber(row.in, 2)}</td>
               <td class="mono">${formatNumber(row.out, 2)}</td>
               <td class="mono">${formatNumber(current, 2)}</td>
+              <td>
+                <button class="mini-delete-stock" data-stock-key="${escapeHtml(key)}">Delete stock</button>
+              </td>
             </tr>
           `;
         });
@@ -1375,6 +1412,7 @@
         : "No sales yet";
 
       aggregateStock();
+      updateProductNameDatalist();
     }
 
     function renderTables() {
@@ -1582,6 +1620,18 @@
       if (extra) alert(extra);
     }
 
+    function deleteStockByKey(key) {
+      const [name, sku] = key.split("||");
+      const before = state.stockMovements.length;
+      state.stockMovements = state.stockMovements.filter(
+        r => !(r.productName === name && r.sku === sku)
+      );
+      const removed = before - state.stockMovements.length;
+      if (removed > 0) {
+        refresh();
+      }
+    }
+
     const recentSalesBodyEl = document.getElementById("recentSalesBody");
     recentSalesBodyEl.addEventListener("click", event => {
       const deleteBtn = event.target.closest(".mini-delete");
@@ -1603,6 +1653,16 @@
       if (!sale) return;
       sale.status = select.value === "paid" ? "paid" : "unpaid";
       refresh();
+    });
+
+    document.getElementById("stockBySkuBody").addEventListener("click", event => {
+      const btn = event.target.closest(".mini-delete-stock");
+      if (!btn) return;
+      const key = btn.getAttribute("data-stock-key");
+      if (!key) return;
+      const confirmed = askQuizConfirmation();
+      if (!confirmed) return;
+      deleteStockByKey(key);
     });
 
     els.customerList.addEventListener("click", event => {
@@ -1641,11 +1701,14 @@
         <div class="product-row-grid">
           <label>
             Product name
-            <input type="text" class="prod-name" placeholder="Dat Lager" value="${escapeHtml(initial.productName || "")}" required>
+            <input type="text" class="prod-name" list="productNameList" placeholder="Dat Lager" value="${escapeHtml(initial.productName || "")}" required>
           </label>
           <label>
             Product SKU / format
-            <input type="text" class="prod-sku" placeholder="33cl can, 30L keg" value="${escapeHtml(initial.sku || "")}" required>
+            <select class="prod-sku">
+              <option value="330ml can" ${initial.sku === "330ml can" ? "selected" : ""}>330ml can</option>
+              <option value="30L keg" ${initial.sku === "30L keg" ? "selected" : ""}>30L keg</option>
+            </select>
           </label>
           <label>
             Quantity
@@ -1743,7 +1806,7 @@
       return rows
         .map(row => {
           const name = row.querySelector(".prod-name").value.trim();
-          const sku = row.querySelector(".prod-sku").value.trim();
+          const sku = row.querySelector(".prod-sku").value;
           const qty = Math.round(Number(row.querySelector(".prod-qty").value || 0));
           const unit = row.querySelector(".prod-unit").value;
           const value = Number(row.querySelector(".prod-value").value || 0);
@@ -1784,7 +1847,7 @@
         date: document.getElementById("saleDate").value,
         invoiceDate: document.getElementById("saleInvoiceDate").value,
         invoice: document.getElementById("saleInvoice").value.trim(),
-        value: totalValueEx,   // ex tax & panta
+        value: totalValueEx,
         tax: totalTax,
         panta: totalPanta,
         invoiceTotal,
@@ -1814,7 +1877,7 @@
       const row = {
         id: uid("stock"),
         productName: document.getElementById("stockProductName").value.trim(),
-        sku: document.getElementById("stockSku").value.trim(),
+        sku: document.getElementById("stockSku").value,
         quantity: Number(document.getElementById("stockQty").value || 0),
         batch: document.getElementById("stockBatch").value.trim(),
         direction: document.getElementById("stockDirection").value,
