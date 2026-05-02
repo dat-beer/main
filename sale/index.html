@@ -940,7 +940,7 @@
           <div class="panel-title">
             <div>
               <h3>Stock by SKU / format</h3>
-              <p class="mini">Combined from stock movements and sales. Volumes in liters.</p>
+              <p class="mini">Combined from stock movements and sales. Units as registered.</p>
             </div>
           </div>
           <div class="table-wrap">
@@ -950,9 +950,9 @@
                   <th>Product</th>
                   <th>SKU / format</th>
                   <th>Batch</th>
-                  <th>Total in (L)</th>
-                  <th>Total out (L)</th>
-                  <th>Current (L)</th>
+                  <th>Total in</th>
+                  <th>Total out</th>
+                  <th>Current</th>
                   <th></th>
                 </tr>
               </thead>
@@ -1236,7 +1236,7 @@
           "<": "&lt;",
           ">": "&gt;",
           '"': "&quot;",
-          "'": "&#39;"
+          "'": "&#39;";
         };
         return chars[tag] || tag;
       });
@@ -1356,24 +1356,28 @@
             name: row.productName,
             sku: row.sku,
             batch: row.batch || "",
-            in: 0,
-            out: 0,
-            stockIds: new Set()
+            inUnits: 0,
+            outUnits: 0
           };
         }
-        totalsByKey[key].stockIds.add(row.id);
+        const qty = Number(row.quantity || 0);
+        if (row.direction === "in") {
+          totalsByKey[key].inUnits += qty;
+        } else if (row.direction === "adjust") {
+          if (qty >= 0) {
+            totalsByKey[key].inUnits += qty;
+          } else {
+            totalsByKey[key].outUnits += -qty;
+          }
+        }
         const liters = litersFromStockRow(row);
         if (row.direction === "in") {
-          totalsByKey[key].in += liters;
           totalInLiters += liters;
         } else if (row.direction === "adjust") {
-          const deltaLiters = litersFromStockRow({ ...row, quantity: row.quantity });
           if (row.quantity >= 0) {
-            totalsByKey[key].in += deltaLiters;
-            totalInLiters += deltaLiters;
+            totalInLiters += liters;
           } else {
-            totalsByKey[key].out += -deltaLiters;
-            totalOutLiters += -deltaLiters;
+            totalOutLiters += -liters;
           }
         }
       });
@@ -1386,13 +1390,13 @@
               name: p.productName,
               sku: p.sku,
               batch: p.batch || "",
-              in: 0,
-              out: 0,
-              stockIds: new Set()
+              inUnits: 0,
+              outUnits: 0
             };
           }
+          const qty = Number(p.quantity || 0);
+          totalsByKey[key].outUnits += qty;
           const liters = litersFromSaleProduct(p);
-          totalsByKey[key].out += liters;
           totalOutLiters += liters;
         });
       });
@@ -1405,16 +1409,16 @@
         body.innerHTML = `<tr><td colspan="7">No stock movements yet.</td></tr>`;
       } else {
         rows.forEach(row => {
-          const current = row.in - row.out;
+          const currentUnits = row.inUnits - row.outUnits;
           const key = `${row.name}||${row.sku}||${row.batch || ""}`;
           body.innerHTML += `
             <tr data-stock-key="${escapeHtml(key)}">
               <td>${escapeHtml(row.name || "")}</td>
               <td>${escapeHtml(row.sku || "")}</td>
               <td>${escapeHtml(row.batch || "")}</td>
-              <td class="mono">${formatNumber(row.in, 2)}</td>
-              <td class="mono">${formatNumber(row.out, 2)}</td>
-              <td class="mono">${formatNumber(current, 2)}</td>
+              <td class="mono">${formatNumber(row.inUnits, 2)}</td>
+              <td class="mono">${formatNumber(row.outUnits, 2)}</td>
+              <td class="mono">${formatNumber(currentUnits, 2)}</td>
               <td>
                 <button class="mini-delete-stock" data-stock-key="${escapeHtml(key)}">Delete stock</button>
               </td>
@@ -1423,10 +1427,10 @@
         });
       }
 
-      const currentTotal = totalInLiters - totalOutLiters;
+      const currentLiters = totalInLiters - totalOutLiters;
       document.getElementById("stockTotalIn").textContent = formatNumber(totalInLiters, 2);
       document.getElementById("stockTotalOut").textContent = formatNumber(totalOutLiters, 2);
-      document.getElementById("stockCurrent").textContent = formatNumber(currentTotal, 2);
+      document.getElementById("stockCurrent").textContent = formatNumber(currentLiters, 2);
     }
 
     function aggregate() {
