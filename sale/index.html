@@ -477,6 +477,25 @@
       color: var(--color-error);
     }
 
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .status-pill.paid {
+      background: #2f7d32;
+    }
+
+    .status-pill.unpaid {
+      background: #b02626;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -630,6 +649,16 @@
       border-radius: var(--radius-full);
       border: 1px solid color-mixin(oklab, var(--color-text) 18%, transparent);
       background: var(--color-surface-2);
+    }
+
+    .notes-input {
+      width: 100%;
+      min-width: 160px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-divider);
+      padding: 0.4rem 0.5rem;
+      background: var(--color-surface-2);
+      font-size: var(--text-xs);
     }
 
     @media (max-width: 1080px) {
@@ -861,10 +890,7 @@
             </label>
 
             <datalist id="productNameList"></datalist>
-            <datalist id="productSkuList">
-              <option value="330ml can"></option>
-              <option value="30L keg"></option>
-            </datalist>
+            <datalist id="batchList"></datalist>
 
             <div id="saleProducts" class="product-rows"></div>
 
@@ -1031,7 +1057,6 @@
   </div>
 
   <script>
-    // ---------- utils ----------
     const utils = {
       uid(prefix) {
         return prefix + Math.random().toString(36).slice(2, 10);
@@ -1047,6 +1072,12 @@
         return new Intl.NumberFormat("sv-SE", {
           maximumFractionDigits: digits,
           minimumFractionDigits: digits
+        }).format(Number(value) || 0);
+      },
+      formatInteger(value) {
+        return new Intl.NumberFormat("sv-SE", {
+          maximumFractionDigits: 0,
+          minimumFractionDigits: 0
         }).format(Number(value) || 0);
       },
       toNumber(value, fallback = 0) {
@@ -1067,7 +1098,6 @@
       }
     };
 
-    // ---------- converters ----------
     const converters = {
       litersFromStockRow(row) {
         const qty = utils.toNumber(row.quantity);
@@ -1084,7 +1114,6 @@
       }
     };
 
-    // ---------- state + persistence ----------
     const STORAGE = {
       dbName: "dat-sales-db",
       store: "appState",
@@ -1148,7 +1177,6 @@
       }
     };
 
-    // ---------- DOM cache ----------
     const els = {
       navButtons: document.querySelectorAll("[data-section-target]"),
       sections: document.querySelectorAll(".section"),
@@ -1177,6 +1205,7 @@
       addProductRowBtn: document.getElementById("addProductRowBtn"),
       saleFeedback: document.getElementById("saleFeedback"),
       productNameList: document.getElementById("productNameList"),
+      batchList: document.getElementById("batchList"),
 
       stockForm: document.getElementById("stockForm"),
       stockBySkuBody: document.getElementById("stockBySkuBody"),
@@ -1197,7 +1226,6 @@
       themeToggle: document.querySelector("[data-theme-toggle]")
     };
 
-    // ---------- UI helpers ----------
     const pageCopy = {
       dashboard: {
         title: "Dashboard",
@@ -1368,9 +1396,9 @@
     function renderStock() {
       const { byKey, totalInLiters, totalOutLiters, currentLiters } = computeStockSnapshot();
 
-      els.stockTotalIn.textContent = utils.formatNumber(totalInLiters, 2);
-      els.stockTotalOut.textContent = utils.formatNumber(totalOutLiters, 2);
-      els.stockCurrent.textContent = utils.formatNumber(currentLiters, 2);
+      els.stockTotalIn.textContent = utils.formatInteger(totalInLiters);
+      els.stockTotalOut.textContent = utils.formatInteger(totalOutLiters);
+      els.stockCurrent.textContent = utils.formatInteger(currentLiters);
 
       const body = els.stockBySkuBody;
       body.innerHTML = "";
@@ -1388,9 +1416,9 @@
             <td>${utils.escapeHtml(row.name || "")}</td>
             <td>${utils.escapeHtml(row.sku || "")}</td>
             <td>${utils.escapeHtml(row.batch || "")}</td>
-            <td class="mono">${utils.formatNumber(row.inUnits, 2)}</td>
-            <td class="mono">${utils.formatNumber(row.outUnits, 2)}</td>
-            <td class="mono">${utils.formatNumber(currentUnits, 2)}</td>
+            <td class="mono">${utils.formatInteger(row.inUnits)}</td>
+            <td class="mono">${utils.formatInteger(row.outUnits)}</td>
+            <td class="mono">${utils.formatInteger(currentUnits)}</td>
             <td>
               <button class="mini-delete-stock" data-stock-key="${utils.escapeHtml(key)}">Delete stock</button>
             </td>
@@ -1448,6 +1476,8 @@
           })
           .join("<br>");
 
+        const statusClass = status === "paid" ? "paid" : "unpaid";
+
         els.recentSalesBody.innerHTML += `
           <tr data-sale-id="${row.id}">
             <td>${row.invoiceDate || row.date || ""}</td>
@@ -1459,12 +1489,18 @@
               panta: ${utils.formatCurrency(row.panta || 0)}
             </td>
             <td>
-              <select class="status-select" data-sale-id="${row.id}">
-                <option value="paid" ${status === "paid" ? "selected" : ""}>Paid</option>
-                <option value="unpaid" ${status === "unpaid" ? "selected" : ""}>Unpaid</option>
-              </select>
+              <span class="status-pill ${statusClass}" data-status-pill="${row.id}">
+                ${status === "paid" ? "Paid" : "Unpaid"}
+              </span>
             </td>
-            <td>${utils.escapeHtml(row.notes || "")}</td>
+            <td>
+              <input
+                class="notes-input"
+                data-notes-input="${row.id}"
+                type="text"
+                value="${utils.escapeHtml(row.notes || "")}"
+              >
+            </td>
             <td>
               <button class="mini-delete" data-sale-id="${row.id}">Delete</button>
             </td>
@@ -1598,7 +1634,7 @@
           </label>
           <label>
             Batch number
-            <input type="text" class="prod-batch" placeholder="DL-2026-01" value="${utils.escapeHtml(initial.batch || "")}">
+            <input type="text" class="prod-batch" list="batchList" placeholder="DL-2026-01" value="${utils.escapeHtml(initial.batch || "")}">
           </label>
           <label>
             Quantity
@@ -1671,6 +1707,23 @@
       });
     }
 
+    function renderBatchDatalist() {
+      const list = els.batchList;
+      list.innerHTML = "";
+      const batches = [
+        ...new Set(
+          state.stockMovements
+            .map(r => r.batch)
+            .filter(b => b && b.trim().length > 0)
+        )
+      ].sort();
+      batches.forEach(batch => {
+        const opt = document.createElement("option");
+        opt.value = batch;
+        list.appendChild(opt);
+      });
+    }
+
     function refreshAll() {
       updateCustomerSelect();
       renderCustomers();
@@ -1679,6 +1732,7 @@
       renderRecentSales();
       drawChart();
       renderProductNameDatalist();
+      renderBatchDatalist();
       store.save().catch(() => {});
     }
 
@@ -1690,7 +1744,6 @@
       return Number(answer) === a + b;
     }
 
-    // ---------- events ----------
     els.navButtons.forEach(btn => {
       btn.addEventListener("click", () => switchSection(btn.dataset.sectionTarget));
     });
@@ -1869,14 +1922,14 @@
       refreshAll();
     });
 
-    els.recentSalesBody.addEventListener("change", e => {
-      const select = e.target.closest(".status-select");
-      if (!select) return;
-      const id = select.getAttribute("data-sale-id");
+    els.recentSalesBody.addEventListener("input", e => {
+      const input = e.target.closest("[data-notes-input]");
+      if (!input) return;
+      const id = input.getAttribute("data-notes-input");
       const sale = state.sales.find(s => s.id === id);
       if (!sale) return;
-      sale.status = select.value === "paid" ? "paid" : "unpaid";
-      refreshAll();
+      sale.notes = input.value;
+      store.save().catch(() => {});
     });
 
     els.downloadDataBtn.addEventListener("click", () => {
@@ -1936,7 +1989,6 @@
       switchSection("dashboard");
     });
 
-    // ---------- init ----------
     async function init() {
       document.documentElement.setAttribute("data-theme", state.theme);
       const today = new Date().toISOString().slice(0, 10);
@@ -1958,7 +2010,7 @@
           }
         }
       } catch {
-        // fall back to in-memory only
+        // fallback to in-memory only
       }
 
       if (!els.saleProducts.children.length) {
