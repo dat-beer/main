@@ -605,7 +605,7 @@
 
     .product-row-grid {
       display: grid;
-      grid-template-columns: repeat(8, minmax(0, 1fr));
+      grid-template-columns: repeat(9, minmax(0, 1fr));
       gap: var(--space-3);
     }
 
@@ -773,20 +773,20 @@
             <div class="panel-title">
               <div>
                 <h3>Stock snapshot</h3>
-                <p class="mini">Totals across all products</p>
+                <p class="mini">Totals across all products (liters)</p>
               </div>
             </div>
             <div class="grid">
               <div>
-                <div class="mini">Total in</div>
+                <div class="mini">Total in (L)</div>
                 <div class="metric mono" id="stockTotalIn">0</div>
               </div>
               <div>
-                <div class="mini">Total out</div>
+                <div class="mini">Total out (L)</div>
                 <div class="metric mono" id="stockTotalOut">0</div>
               </div>
               <div>
-                <div class="mini">Current stock</div>
+                <div class="mini">Current stock (L)</div>
                 <div class="metric mono" id="stockCurrent">0</div>
               </div>
             </div>
@@ -857,7 +857,7 @@
 
             <label>
               Products in this sale
-              <span class="help">Each row is one product / SKU / format with its own quantity, unit, value, tax, and panta.</span>
+              <span class="help">Each row is one product / SKU / format with its own quantity, unit, batch, value, tax, and panta.</span>
             </label>
 
             <datalist id="productNameList"></datalist>
@@ -940,7 +940,7 @@
           <div class="panel-title">
             <div>
               <h3>Stock by SKU / format</h3>
-              <p class="mini">Combined from stock movements and sales.</p>
+              <p class="mini">Combined from stock movements and sales. Volumes in liters.</p>
             </div>
           </div>
           <div class="table-wrap">
@@ -949,9 +949,10 @@
                 <tr>
                   <th>Product</th>
                   <th>SKU / format</th>
-                  <th>Total in</th>
-                  <th>Total out</th>
-                  <th>Current</th>
+                  <th>Batch</th>
+                  <th>Total in (L)</th>
+                  <th>Total out (L)</th>
+                  <th>Current (L)</th>
                   <th></th>
                 </tr>
               </thead>
@@ -1318,41 +1319,81 @@
         });
     }
 
+    function litersFromStockRow(row) {
+      const qty = Number(row.quantity || 0);
+      if (row.sku === "330ml can") {
+        return qty * 0.33;
+      }
+      if (row.sku === "30L keg") {
+        return qty * 30;
+      }
+      return qty;
+    }
+
+    function litersFromSaleProduct(p) {
+      const qty = Number(p.quantity || 0);
+      if (p.unit === "cans") {
+        return qty * 0.33;
+      }
+      if (p.unit === "liters") {
+        return qty;
+      }
+      if (p.sku === "30L keg") {
+        return qty * 30;
+      }
+      return qty;
+    }
+
     function aggregateStock() {
       const totalsByKey = {};
-      let totalIn = 0;
-      let totalOut = 0;
+      let totalInLiters = 0;
+      let totalOutLiters = 0;
 
       state.stockMovements.forEach(row => {
-        const key = `${row.productName}||${row.sku}`;
+        const key = `${row.productName}||${row.sku}||${row.batch || ""}`;
         if (!totalsByKey[key]) {
-          totalsByKey[key] = { name: row.productName, sku: row.sku, in: 0, out: 0, stockIds: new Set() };
+          totalsByKey[key] = {
+            name: row.productName,
+            sku: row.sku,
+            batch: row.batch || "",
+            in: 0,
+            out: 0,
+            stockIds: new Set()
+          };
         }
         totalsByKey[key].stockIds.add(row.id);
+        const liters = litersFromStockRow(row);
         if (row.direction === "in") {
-          totalsByKey[key].in += Number(row.quantity || 0);
-          totalIn += Number(row.quantity || 0);
+          totalsByKey[key].in += liters;
+          totalInLiters += liters;
         } else if (row.direction === "adjust") {
-          const delta = Number(row.quantity || 0);
-          if (delta >= 0) {
-            totalsByKey[key].in += delta;
-            totalIn += delta;
+          const deltaLiters = litersFromStockRow({ ...row, quantity: row.quantity });
+          if (row.quantity >= 0) {
+            totalsByKey[key].in += deltaLiters;
+            totalInLiters += deltaLiters;
           } else {
-            totalsByKey[key].out += -delta;
-            totalOut += -delta;
+            totalsByKey[key].out += -deltaLiters;
+            totalOutLiters += -deltaLiters;
           }
         }
       });
 
       state.sales.forEach(sale => {
         (sale.products || []).forEach(p => {
-          const key = `${p.productName}||${p.sku}`;
+          const key = `${p.productName}||${p.sku}||${p.batch || ""}`;
           if (!totalsByKey[key]) {
-            totalsByKey[key] = { name: p.productName, sku: p.sku, in: 0, out: 0, stockIds: new Set() };
+            totalsByKey[key] = {
+              name: p.productName,
+              sku: p.sku,
+              batch: p.batch || "",
+              in: 0,
+              out: 0,
+              stockIds: new Set()
+            };
           }
-          const qty = Number(p.quantity || 0);
-          totalsByKey[key].out += qty;
-          totalOut += qty;
+          const liters = litersFromSaleProduct(p);
+          totalsByKey[key].out += liters;
+          totalOutLiters += liters;
         });
       });
 
@@ -1361,15 +1402,16 @@
 
       const rows = Object.values(totalsByKey);
       if (!rows.length) {
-        body.innerHTML = `<tr><td colspan="6">No stock movements yet.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="7">No stock movements yet.</td></tr>`;
       } else {
         rows.forEach(row => {
           const current = row.in - row.out;
-          const key = `${row.name}||${row.sku}`;
+          const key = `${row.name}||${row.sku}||${row.batch || ""}`;
           body.innerHTML += `
             <tr data-stock-key="${escapeHtml(key)}">
               <td>${escapeHtml(row.name || "")}</td>
               <td>${escapeHtml(row.sku || "")}</td>
+              <td>${escapeHtml(row.batch || "")}</td>
               <td class="mono">${formatNumber(row.in, 2)}</td>
               <td class="mono">${formatNumber(row.out, 2)}</td>
               <td class="mono">${formatNumber(current, 2)}</td>
@@ -1381,9 +1423,9 @@
         });
       }
 
-      const currentTotal = totalIn - totalOut;
-      document.getElementById("stockTotalIn").textContent = formatNumber(totalIn, 2);
-      document.getElementById("stockTotalOut").textContent = formatNumber(totalOut, 2);
+      const currentTotal = totalInLiters - totalOutLiters;
+      document.getElementById("stockTotalIn").textContent = formatNumber(totalInLiters, 2);
+      document.getElementById("stockTotalOut").textContent = formatNumber(totalOutLiters, 2);
       document.getElementById("stockCurrent").textContent = formatNumber(currentTotal, 2);
     }
 
@@ -1433,7 +1475,7 @@
           const productsDisplay = (row.products || [])
             .map(p => {
               const unit = p.unit === "cans" ? "cans" : "L";
-              return `${escapeHtml(p.productName || "")} — ${formatNumber(
+              return `${escapeHtml(p.productName || "")} — ${escapeHtml(p.batch || "")} — ${formatNumber(
                 p.quantity || 0,
                 0
               )} ${unit}, ex ${formatCurrency(p.value || 0)}, tax ${formatCurrency(
@@ -1621,10 +1663,10 @@
     }
 
     function deleteStockByKey(key) {
-      const [name, sku] = key.split("||");
+      const [name, sku, batch] = key.split("||");
       const before = state.stockMovements.length;
       state.stockMovements = state.stockMovements.filter(
-        r => !(r.productName === name && r.sku === sku)
+        r => !(r.productName === name && r.sku === sku && (r.batch || "") === (batch || ""))
       );
       const removed = before - state.stockMovements.length;
       if (removed > 0) {
@@ -1709,6 +1751,10 @@
               <option value="330ml can" ${initial.sku === "330ml can" ? "selected" : ""}>330ml can</option>
               <option value="30L keg" ${initial.sku === "30L keg" ? "selected" : ""}>30L keg</option>
             </select>
+          </label>
+          <label>
+            Batch number
+            <input type="text" class="prod-batch" placeholder="DL-2026-01" value="${escapeHtml(initial.batch || "")}">
           </label>
           <label>
             Quantity
@@ -1807,13 +1853,14 @@
         .map(row => {
           const name = row.querySelector(".prod-name").value.trim();
           const sku = row.querySelector(".prod-sku").value;
+          const batch = row.querySelector(".prod-batch").value.trim();
           const qty = Math.round(Number(row.querySelector(".prod-qty").value || 0));
           const unit = row.querySelector(".prod-unit").value;
           const value = Number(row.querySelector(".prod-value").value || 0);
           const tax = Number(row.querySelector(".prod-tax").value || 0);
           const panta = Number(row.querySelector(".prod-panta").value || 0);
           const price = value + tax + panta;
-          return { productName: name, sku, quantity: qty, unit, value, tax, panta, price };
+          return { productName: name, sku, batch, quantity: qty, unit, value, tax, panta, price };
         })
         .filter(p => p.productName && p.sku && p.quantity > 0);
     }
@@ -1832,8 +1879,7 @@
       }
 
       const totalVolumeLiters = products.reduce((sum, p) => {
-        if (p.unit === "cans") return sum + p.quantity / 3;
-        return sum + p.quantity;
+        return sum + litersFromSaleProduct(p);
       }, 0);
 
       const totalValueEx = products.reduce((sum, p) => sum + (p.value || 0), 0);
