@@ -19,7 +19,7 @@
       --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
 
       --space-1: 0.25rem;
-      --space-2: 0.5rem;
+      --space-2: 0.0.5rem;
       --space-3: 0.75rem;
       --space-4: 1rem;
       --space-5: 1.25rem;
@@ -601,6 +601,12 @@
       background: var(--color-surface-2);
     }
 
+    .product-row-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: var(--space-3);
+    }
+
     .product-row .inline {
       align-items: flex-end;
     }
@@ -616,6 +622,14 @@
       color: var(--color-text-muted);
     }
 
+    .status-select {
+      font-size: var(--text-xs);
+      padding: 0.3rem 0.4rem;
+      border-radius: var(--radius-full);
+      border: 1px solid color-mixin(oklab, var(--color-text) 18%, transparent);
+      background: var(--color-surface-2);
+    }
+
     @media (max-width: 1080px) {
       .app {
         grid-template-columns: 1fr;
@@ -629,7 +643,8 @@
       .kpis,
       .layout-2,
       .split,
-      .form-grid {
+      .form-grid,
+      .product-row-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -790,7 +805,7 @@
                   <th>Invoice date</th>
                   <th>Customer</th>
                   <th>Products</th>
-                  <th>Revenue</th>
+                  <th>Revenue (ex/tax/panta)</th>
                   <th>Status</th>
                   <th>Notes</th>
                   <th></th>
@@ -830,10 +845,6 @@
                 <input id="saleInvoice" type="text" placeholder="INV-2026-014">
               </label>
               <label>
-                Total sale value SEK
-                <input id="saleValue" type="number" step="0.01" min="0" placeholder="1450" required>
-              </label>
-              <label>
                 Payment status
                 <select id="saleStatus" required>
                   <option value="unpaid" selected>Unpaid</option>
@@ -844,7 +855,7 @@
 
             <label>
               Products in this sale
-              <span class="help">Each row is one product / SKU / format with its own volume and unit.</span>
+              <span class="help">Each row is one product / SKU / format with its own quantity, unit, value, tax, and panta.</span>
             </label>
 
             <div id="saleProducts" class="product-rows"></div>
@@ -1270,7 +1281,7 @@
     }
 
     function aggregateStock() {
-      const totalsByKey = {}; // key: name|sku
+      const totalsByKey = {};
       let totalIn = 0;
       let totalOut = 0;
 
@@ -1294,7 +1305,6 @@
         }
       });
 
-      // Out via sales: each productRow is an "out" quantity
       state.sales.forEach(sale => {
         (sale.products || []).forEach(p => {
           const key = `${p.productName}||${p.sku}`;
@@ -1340,7 +1350,7 @@
           .filter(row => (row.status || "paid") === "paid")
           .reduce((sum, row) => sum + Number(row.value || 0), 0),
         volume: state.sales.reduce(
-          (sum, row) => sum + Number(row.totalVolumeLiters || row.volume || 0),
+          (sum, row) => sum + Number(row.totalVolumeLiters || 0),
           0
         ),
         orders: state.sales.length,
@@ -1381,8 +1391,10 @@
               const unit = p.unit === "cans" ? "cans" : "L";
               return `${escapeHtml(p.productName || "")} — ${formatNumber(
                 p.quantity || 0,
-                2
-              )} ${unit}`;
+                0
+              )} ${unit}, ex ${formatCurrency(p.value || 0)}, tax ${formatCurrency(
+                p.tax || 0
+              )}, panta ${formatCurrency(p.panta || 0)}`;
             })
             .join("<br>");
 
@@ -1391,9 +1403,16 @@
               <td>${row.invoiceDate || row.date || ""}</td>
               <td>${escapeHtml(customer?.name || "Unknown")}</td>
               <td>${productsDisplay || ""}</td>
-              <td class="mono">${formatCurrency(row.value || 0)}</td>
+              <td class="mono">
+                ex: ${formatCurrency(row.value || 0)}<br>
+                tax: ${formatCurrency(row.tax || 0)}<br>
+                panta: ${formatCurrency(row.panta || 0)}
+              </td>
               <td>
-                <span class="chip">${status === "paid" ? "Paid" : "Unpaid"}</span>
+                <select class="status-select" data-sale-id="${row.id}">
+                  <option value="paid" ${status === "paid" ? "selected" : ""}>Paid</option>
+                  <option value="unpaid" ${status === "unpaid" ? "selected" : ""}>Unpaid</option>
+                </select>
               </td>
               <td>${escapeHtml(row.notes || "")}</td>
               <td>
@@ -1569,6 +1588,17 @@
       }
     });
 
+    recentSalesBodyEl.addEventListener("change", event => {
+      const select = event.target.closest(".status-select");
+      if (!select) return;
+      const saleId = select.getAttribute("data-sale-id");
+      if (!saleId) return;
+      const sale = state.sales.find(s => s.id === saleId);
+      if (!sale) return;
+      sale.status = select.value === "paid" ? "paid" : "unpaid";
+      refresh();
+    });
+
     els.customerList.addEventListener("click", event => {
       const btn = event.target.closest(".mini-delete-customer");
       if (!btn) return;
@@ -1602,33 +1632,37 @@
       div.className = "product-row";
       div.dataset.rowId = rowId;
       div.innerHTML = `
-        <div class="form-grid">
+        <div class="product-row-grid">
           <label>
             Product name
-            <input type="text" class="prod-name" placeholder="Dat Lager" value="${escapeHtml(
-              initial.productName || ""
-            )}" required>
+            <input type="text" class="prod-name" placeholder="Dat Lager" value="${escapeHtml(initial.productName || "")}" required>
           </label>
           <label>
             Product SKU / format
-            <input type="text" class="prod-sku" placeholder="33cl can, 30L keg" value="${escapeHtml(
-              initial.sku || ""
-            )}" required>
+            <input type="text" class="prod-sku" placeholder="33cl can, 30L keg" value="${escapeHtml(initial.sku || "")}" required>
           </label>
           <label>
             Quantity
-            <input type="number" class="prod-qty" step="0.01" min="0" placeholder="30" value="${
-              initial.quantity || ""
-            }" required>
+            <input type="number" class="prod-qty" step="1" min="0" placeholder="30" value="${initial.quantity || ""}" required>
           </label>
           <label>
             Unit
             <select class="prod-unit">
-              <option value="liters" ${
-                initial.unit === "liters" || !initial.unit ? "selected" : ""
-              }>Liters</option>
+              <option value="liters" ${(initial.unit === "liters" || !initial.unit) ? "selected" : ""}>Liters</option>
               <option value="cans" ${initial.unit === "cans" ? "selected" : ""}>Cans</option>
             </select>
+          </label>
+          <label>
+            Product value (ex. tax & panta)
+            <input type="number" class="prod-value" step="0.01" min="0" placeholder="1450" value="${initial.value || ""}">
+          </label>
+          <label>
+            Tax
+            <input type="number" class="prod-tax" step="0.01" min="0" placeholder="0" value="${initial.tax || ""}">
+          </label>
+          <label>
+            Panta
+            <input type="number" class="prod-panta" step="0.01" min="0" placeholder="0" value="${initial.panta || ""}">
           </label>
         </div>
         <div class="inline">
@@ -1656,9 +1690,12 @@
       return rows.map(row => {
         const name = row.querySelector(".prod-name").value.trim();
         const sku = row.querySelector(".prod-sku").value.trim();
-        const qty = Number(row.querySelector(".prod-qty").value || 0);
+        const qty = Math.round(Number(row.querySelector(".prod-qty").value || 0));
         const unit = row.querySelector(".prod-unit").value;
-        return { productName: name, sku, quantity: qty, unit };
+        const value = Number(row.querySelector(".prod-value").value || 0);
+        const tax = Number(row.querySelector(".prod-tax").value || 0);
+        const panta = Number(row.querySelector(".prod-panta").value || 0);
+        return { productName: name, sku, quantity: qty, unit, value, tax, panta };
       }).filter(p => p.productName && p.sku && p.quantity > 0);
     }
 
@@ -1680,13 +1717,19 @@
         return sum + p.quantity;
       }, 0);
 
+      const totalValueEx = products.reduce((sum, p) => sum + (p.value || 0), 0);
+      const totalTax = products.reduce((sum, p) => sum + (p.tax || 0), 0);
+      const totalPanta = products.reduce((sum, p) => sum + (p.panta || 0), 0);
+
       const sale = {
         id: uid("sale"),
         customerId: document.getElementById("saleCustomer").value,
         date: document.getElementById("saleDate").value,
         invoiceDate: document.getElementById("saleInvoiceDate").value,
         invoice: document.getElementById("saleInvoice").value.trim(),
-        value: Number(document.getElementById("saleValue").value || 0),
+        value: totalValueEx,
+        tax: totalTax,
+        panta: totalPanta,
         status: document.getElementById("saleStatus").value || "unpaid",
         products,
         totalVolumeLiters,
@@ -1804,7 +1847,6 @@
           }
         }
       } catch (e) {}
-      // ensure at least one product row is present for convenience
       if (!els.saleProducts.children.length) {
         els.saleProducts.appendChild(createProductRow());
       }
