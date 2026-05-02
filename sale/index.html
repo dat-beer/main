@@ -71,7 +71,7 @@
       --color-surface: #161616;
       --color-surface-2: #1c1c1c;
       --color-surface-offset: #222222;
-      --color-border: #2f2f2f;
+      --color-border: #2f2f3f;
       --color-divider: #262626;
 
       --color-text: #f6f2ea;
@@ -267,6 +267,12 @@
     .btn-secondary {
       background: var(--color-surface);
       border: 1px solid color-mixin(oklab, var(--color-text) 12%, transparent);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px dashed color-mixin(oklab, var(--color-text) 18%, transparent);
+      color: var(--color-text-muted);
     }
 
     .grid {
@@ -519,6 +525,21 @@
       background: color-mixin(oklab, var(--color-error) 8%, var(--color-surface));
     }
 
+    .chips-inline {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .chip {
+      font-size: var(--text-xs);
+      padding: 0.25rem 0.7rem;
+      border-radius: var(--radius-full);
+      background: var(--color-surface-offset);
+      color: var(--color-text-muted);
+    }
+
     .auth-overlay {
       position: fixed;
       inset: 0;
@@ -564,6 +585,35 @@
       filter: blur(8px);
       pointer-events: none;
       user-select: none;
+    }
+
+    .product-rows {
+      display: grid;
+      gap: var(--space-3);
+    }
+
+    .product-row {
+      display: grid;
+      gap: var(--space-2);
+      border: 1px dashed color-mixin(oklab, var(--color-text) 12%, transparent);
+      border-radius: var(--radius-lg);
+      padding: var(--space-3);
+      background: var(--color-surface-2);
+    }
+
+    .product-row .inline {
+      align-items: flex-end;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius-full);
+      font-size: var(--text-xs);
+      background: var(--color-surface-offset);
+      color: var(--color-text-muted);
     }
 
     @media (max-width: 1080px) {
@@ -636,6 +686,7 @@
       <nav class="nav" aria-label="Primary">
         <button class="active" data-section-target="dashboard">Dashboard</button>
         <button data-section-target="sales">Register sale</button>
+        <button data-section-target="stock">Stock</button>
         <button data-section-target="customers">Customers</button>
       </nav>
 
@@ -650,7 +701,7 @@
       <header class="topbar">
         <div>
           <h2 id="pageTitle">Dashboard</h2>
-          <p id="pageIntro">Track sales by customer, watch revenue over time, and keep a simple customer database in one file.</p>
+          <p id="pageIntro">Track sales, stock, and customers for your trade accounts.</p>
         </div>
         <div class="toolbar">
           <button class="btn btn-secondary" id="downloadDataBtn">Export JSON</button>
@@ -662,10 +713,11 @@
         </div>
       </header>
 
+      <!-- Dashboard -->
       <section id="dashboard" class="section active">
         <div class="grid kpis">
           <article class="card">
-            <h3>Total revenue</h3>
+            <h3>Total revenue (paid)</h3>
             <div class="metric mono" id="kpiRevenue">0 kr</div>
             <p class="meta" id="kpiRevenueMeta">No sales yet</p>
           </article>
@@ -691,7 +743,7 @@
             <div class="panel-title">
               <div>
                 <h3>Revenue over time</h3>
-                <p class="mini">Monthly total based on sale date</p>
+                <p class="mini">Paid vs unpaid by month (invoice date)</p>
               </div>
               <div>
                 <span class="pill" id="chartWindowLabel">All months</span>
@@ -703,22 +755,23 @@
           <article class="card">
             <div class="panel-title">
               <div>
-                <h3>Top customers</h3>
-                <p class="mini">By total revenue</p>
+                <h3>Stock snapshot</h3>
+                <p class="mini">Totals across all products</p>
               </div>
             </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Customer</th>
-                    <th>Revenue</th>
-                    <th>Volume</th>
-                    <th>Orders</th>
-                  </tr>
-                </thead>
-                <tbody id="topCustomersBody"></tbody>
-              </table>
+            <div class="grid">
+              <div>
+                <div class="mini">Total in</div>
+                <div class="metric mono" id="stockTotalIn">0</div>
+              </div>
+              <div>
+                <div class="mini">Total out</div>
+                <div class="metric mono" id="stockTotalOut">0</div>
+              </div>
+              <div>
+                <div class="mini">Current stock</div>
+                <div class="metric mono" id="stockCurrent">0</div>
+              </div>
             </div>
           </article>
         </div>
@@ -734,11 +787,11 @@
             <table>
               <thead>
                 <tr>
-                  <th>Date</th>
+                  <th>Invoice date</th>
                   <th>Customer</th>
-                  <th>Beer</th>
-                  <th>Volume</th>
+                  <th>Products</th>
                   <th>Revenue</th>
+                  <th>Status</th>
                   <th>Notes</th>
                   <th></th>
                 </tr>
@@ -749,12 +802,13 @@
         </article>
       </section>
 
+      <!-- Register sale -->
       <section id="sales" class="section">
         <article class="card">
           <div class="panel-title">
             <div>
               <h3>Register sale</h3>
-              <p class="mini">Add one delivery, invoice, or keg sale.</p>
+              <p class="mini">Add one delivery, invoice, or keg/can sale.</p>
             </div>
           </div>
           <form id="saleForm">
@@ -764,33 +818,38 @@
                 <select id="saleCustomer" required></select>
               </label>
               <label>
-                Sale date
-                <input id="saleDate" type="date" required>
+                Invoice date
+                <input id="saleInvoiceDate" type="date" required>
               </label>
               <label>
-                Beer product
-                <input id="saleBeer" type="text" placeholder="Dat Lager 30L keg" required>
+                Sale date (delivery)
+                <input id="saleDate" type="date" required>
               </label>
               <label>
                 Invoice ref
                 <input id="saleInvoice" type="text" placeholder="INV-2026-014">
               </label>
               <label>
-                Volume
-                <div class="inline">
-                  <input id="saleVolume" type="number" step="0.1" min="0" placeholder="30" required>
-                  <select id="saleUnit" required>
-                    <option value="liters" selected>Liters</option>
-                    <option value="cans">Cans</option>
-                  </select>
-                </div>
-                <span class="help">3 cans count as 1 liter in total volume.</span>
-              </label>
-              <label>
                 Total sale value SEK
                 <input id="saleValue" type="number" step="0.01" min="0" placeholder="1450" required>
               </label>
+              <label>
+                Payment status
+                <select id="saleStatus" required>
+                  <option value="unpaid" selected>Unpaid</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </label>
             </div>
+
+            <label>
+              Products in this sale
+              <span class="help">Each row is one product / SKU / format with its own volume and unit.</span>
+            </label>
+
+            <div id="saleProducts" class="product-rows"></div>
+            <button type="button" class="btn btn-ghost" id="addProductRowBtn">+ Add product row</button>
+
             <label>
               Notes
               <textarea id="saleNotes" placeholder="Returned empties, seasonal tap takeover, payment terms..."></textarea>
@@ -803,6 +862,77 @@
         </article>
       </section>
 
+      <!-- Stock -->
+      <section id="stock" class="section">
+        <article class="card">
+          <div class="panel-title">
+            <div>
+              <h3>Register stock</h3>
+              <p class="mini">Log incoming batches or manual adjustments.</p>
+            </div>
+          </div>
+          <form id="stockForm">
+            <div class="form-grid">
+              <label>
+                Product name
+                <input id="stockProductName" type="text" placeholder="Dat Lager" required>
+              </label>
+              <label>
+                Product SKU / format
+                <input id="stockSku" type="text" placeholder="33cl can, 30L keg" required>
+              </label>
+              <label>
+                Quantity (in units)
+                <input id="stockQty" type="number" min="0" step="0.01" placeholder="30" required>
+              </label>
+              <label>
+                Batch number
+                <input id="stockBatch" type="text" placeholder="DL-2026-01">
+              </label>
+            </div>
+            <label>
+              Direction
+              <select id="stockDirection" required>
+                <option value="in">Stock in</option>
+                <option value="adjust">Manual adjustment (+/-)</option>
+              </select>
+            </label>
+            <label>
+              Notes
+              <textarea id="stockNotes" placeholder="Brewed, packaged, shrink, inventory correction..."></textarea>
+            </label>
+            <div class="inline">
+              <button class="btn btn-primary" type="submit">Save stock row</button>
+              <span id="stockFeedback" class="status hidden"></span>
+            </div>
+          </form>
+        </article>
+
+        <article class="card">
+          <div class="panel-title">
+            <div>
+              <h3>Stock by SKU / format</h3>
+              <p class="mini">Combined from stock movements and sales.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>SKU / format</th>
+                  <th>Total in</th>
+                  <th>Total out</th>
+                  <th>Current</th>
+                </tr>
+              </thead>
+              <tbody id="stockBySkuBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- Customers -->
       <section id="customers" class="section">
         <div class="grid split">
           <article class="card">
@@ -831,6 +961,14 @@
                   <input id="customerEmail" type="email" placeholder="Optional">
                 </label>
                 <label>
+                  Momsregistreringsnummer
+                  <input id="customerVat" type="text" placeholder="SExxxxxxxxxxxx01">
+                </label>
+                <label>
+                  Org.nr
+                  <input id="customerOrg" type="text" placeholder="556xxxx-xxxx">
+                </label>
+                <label>
                   Address
                   <textarea id="customerAddress" placeholder="Street, postcode, city" required></textarea>
                 </label>
@@ -852,7 +990,7 @@
             <div>
               <label>
                 Search
-                <input id="customerSearch" type="search" placeholder="Search name or address">
+                <input id="customerSearch" type="search" placeholder="Search name, address, org.nr, moms...">
               </label>
             </div>
             <div class="customer-list" id="customerList"></div>
@@ -866,6 +1004,7 @@
     const state = {
       customers: [],
       sales: [],
+      stockMovements: [],
       chart: null,
       theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
       db: null
@@ -887,14 +1026,23 @@
       sections: document.querySelectorAll(".section"),
       title: document.getElementById("pageTitle"),
       intro: document.getElementById("pageIntro"),
+
       saleCustomer: document.getElementById("saleCustomer"),
       saleDate: document.getElementById("saleDate"),
+      saleInvoiceDate: document.getElementById("saleInvoiceDate"),
       saleForm: document.getElementById("saleForm"),
       saleFeedback: document.getElementById("saleFeedback"),
+      saleProducts: document.getElementById("saleProducts"),
+      addProductRowBtn: document.getElementById("addProductRowBtn"),
+
+      stockForm: document.getElementById("stockForm"),
+      stockFeedback: document.getElementById("stockFeedback"),
+
       customerForm: document.getElementById("customerForm"),
       customerFeedback: document.getElementById("customerFeedback"),
       customerList: document.getElementById("customerList"),
       customerSearch: document.getElementById("customerSearch"),
+
       restoreFile: document.getElementById("restoreFile"),
       authOverlay: document.getElementById("authOverlay"),
       loginForm: document.getElementById("loginForm"),
@@ -904,7 +1052,9 @@
     };
 
     document.documentElement.setAttribute("data-theme", state.theme);
-    els.saleDate.value = new Date().toISOString().slice(0, 10);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    els.saleDate.value = todayStr;
+    els.saleInvoiceDate.value = todayStr;
 
     function openDb() {
       return new Promise((resolve, reject) => {
@@ -946,6 +1096,7 @@
           {
             customers: state.customers,
             sales: state.sales,
+            stockMovements: state.stockMovements,
             theme: state.theme,
             savedAt: new Date().toISOString()
           },
@@ -959,15 +1110,19 @@
     const pageCopy = {
       dashboard: {
         title: "Dashboard",
-        intro: "Track revenue, volume, and customer performance across your local trade accounts."
+        intro: "Track sales, stock, and customers across your trade accounts."
       },
       sales: {
         title: "Register sale",
         intro: "Log every keg, can drop, or invoice line with date, value, and volume."
       },
+      stock: {
+        title: "Stock",
+        intro: "Register packages in and see current stock by SKU/format."
+      },
       customers: {
         title: "Customers",
-        intro: "Manage trade accounts and add new venues as you grow."
+        intro: "Manage trade accounts, details, and VAT info."
       }
     };
 
@@ -1063,7 +1218,7 @@
     function renderCustomers() {
       const q = els.customerSearch.value.trim().toLowerCase();
       const filtered = state.customers.filter(c =>
-        [c.name, c.address, c.contact, c.email, c.phone]
+        [c.name, c.address, c.contact, c.email, c.phone, c.vatNumber, c.orgNumber]
           .join(" ")
           .toLowerCase()
           .includes(q)
@@ -1099,19 +1254,95 @@
                 <button class="mini-delete-customer" data-customer-id="${customer.id}">Delete</button>
               </div>
             </div>
-            <p>${customer.contact ? "Contact: " + escapeHtml(customer.contact) : ""} ${customer.phone ? escapeHtml(customer.phone) : ""} ${customer.email ? escapeHtml(customer.email) : ""}</p>
-            <div class="inline">
-              <span class="mini mono">Revenue ${formatCurrency(revenue)}</span>
+            <p>
+              ${customer.contact ? "Contact: " + escapeHtml(customer.contact) + " " : ""}
+              ${customer.phone ? escapeHtml(customer.phone) + " " : ""}
+              ${customer.email ? escapeHtml(customer.email) : ""}
+            </p>
+            <div class="chips-inline">
+              ${customer.vatNumber ? `<span class="chip">Moms: ${escapeHtml(customer.vatNumber)}</span>` : ""}
+              ${customer.orgNumber ? `<span class="chip">Org.nr: ${escapeHtml(customer.orgNumber)}</span>` : ""}
+              <span class="chip">Revenue: ${formatCurrency(revenue)}</span>
             </div>
           `;
           els.customerList.appendChild(div);
         });
     }
 
+    function aggregateStock() {
+      const totalsByKey = {}; // key: name|sku
+      let totalIn = 0;
+      let totalOut = 0;
+
+      state.stockMovements.forEach(row => {
+        const key = `${row.productName}||${row.sku}`;
+        if (!totalsByKey[key]) {
+          totalsByKey[key] = { name: row.productName, sku: row.sku, in: 0, out: 0 };
+        }
+        if (row.direction === "in") {
+          totalsByKey[key].in += Number(row.quantity || 0);
+          totalIn += Number(row.quantity || 0);
+        } else if (row.direction === "adjust") {
+          const delta = Number(row.quantity || 0);
+          if (delta >= 0) {
+            totalsByKey[key].in += delta;
+            totalIn += delta;
+          } else {
+            totalsByKey[key].out += -delta;
+            totalOut += -delta;
+          }
+        }
+      });
+
+      // Out via sales: each productRow is an "out" quantity
+      state.sales.forEach(sale => {
+        (sale.products || []).forEach(p => {
+          const key = `${p.productName}||${p.sku}`;
+          if (!totalsByKey[key]) {
+            totalsByKey[key] = { name: p.productName, sku: p.sku, in: 0, out: 0 };
+          }
+          const qty = Number(p.quantity || 0);
+          totalsByKey[key].out += qty;
+          totalOut += qty;
+        });
+      });
+
+      const body = document.getElementById("stockBySkuBody");
+      body.innerHTML = "";
+
+      const rows = Object.values(totalsByKey);
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="5">No stock movements yet.</td></tr>`;
+      } else {
+        rows.forEach(row => {
+          const current = row.in - row.out;
+          body.innerHTML += `
+            <tr>
+              <td>${escapeHtml(row.name || "")}</td>
+              <td>${escapeHtml(row.sku || "")}</td>
+              <td class="mono">${formatNumber(row.in, 2)}</td>
+              <td class="mono">${formatNumber(row.out, 2)}</td>
+              <td class="mono">${formatNumber(current, 2)}</td>
+            </tr>
+          `;
+        });
+      }
+
+      const currentTotal = totalIn - totalOut;
+      document.getElementById("stockTotalIn").textContent = formatNumber(totalIn, 2);
+      document.getElementById("stockTotalOut").textContent = formatNumber(totalOut, 2);
+      document.getElementById("stockCurrent").textContent = formatNumber(currentTotal, 2);
+    }
+
     function aggregate() {
       const totals = {
-        revenue: state.sales.reduce((sum, row) => sum + Number(row.value || 0), 0),
-        volume: state.sales.reduce((sum, row) => sum + Number(row.volume || 0), 0),
+        revenue: state.sales
+          .filter(row => (row.status || "paid") === "paid")
+          .reduce((sum, row) => sum + Number(row.value || 0), 0),
+        volume: state.sales.reduce(
+          (sum, row) => sum + Number(row.totalVolumeLiters || row.volume || 0),
+          0
+        ),
         orders: state.sales.length,
         activeCustomers: new Set(state.sales.map(row => row.customerId)).size
       };
@@ -1126,68 +1357,48 @@
       document.getElementById("kpiRevenueMeta").textContent = totals.orders
         ? `${formatCurrency(totals.revenue / totals.orders)} average per order`
         : "No sales yet";
+
+      aggregateStock();
     }
 
     function renderTables() {
-      const topBody = document.getElementById("topCustomersBody");
-      topBody.innerHTML = "";
-
-      const ranked = state.customers
-        .map(customer => {
-          const sales = state.sales.filter(s => s.customerId === customer.id);
-          const revenue = sales.reduce((sum, row) => sum + Number(row.value || 0), 0);
-          const volume = sales.reduce((sum, row) => sum + Number(row.volume || 0), 0);
-          const orders = sales.length;
-          return { name: customer.name, revenue, volume, orders };
-        })
-        .filter(row => row.orders > 0)
-        .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 8);
-
-      if (!ranked.length) {
-        topBody.innerHTML = `<tr><td colspan="4">No sales yet.</td></tr>`;
-      } else {
-        ranked.forEach(row => {
-          topBody.innerHTML += `
-            <tr>
-              <td>${escapeHtml(row.name)}</td>
-              <td class="mono">${formatCurrency(row.revenue)}</td>
-              <td class="mono">${formatNumber(row.volume, 1)} L</td>
-              <td class="mono">${row.orders}</td>
-            </tr>
-          `;
-        });
-      }
-
       const recentBody = document.getElementById("recentSalesBody");
       recentBody.innerHTML = "";
       const recent = state.sales
         .slice()
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 12);
+        .sort((a, b) => new Date(b.invoiceDate || b.date) - new Date(a.invoiceDate || a.date))
+        .slice(0, 20);
 
       if (!recent.length) {
         recentBody.innerHTML = `<tr><td colspan="7">No sales logged yet.</td></tr>`;
       } else {
         recent.forEach(row => {
           const customer = state.customers.find(c => c.id === row.customerId);
-          const displayUnit = row.unit || "liters";
-          const displayVolume =
-            typeof row.rawVolume === "number" && row.rawVolume > 0
-              ? row.rawVolume
-              : row.volume;
+          const status = row.status || "paid";
+
+          const productsDisplay = (row.products || [])
+            .map(p => {
+              const unit = p.unit === "cans" ? "cans" : "L";
+              return `${escapeHtml(p.productName || "")} — ${formatNumber(
+                p.quantity || 0,
+                2
+              )} ${unit}`;
+            })
+            .join("<br>");
 
           recentBody.innerHTML += `
-            <tr>
-              <td>${row.date || ""}</td>
+            <tr data-sale-id="${row.id}">
+              <td>${row.invoiceDate || row.date || ""}</td>
               <td>${escapeHtml(customer?.name || "Unknown")}</td>
-              <td>${escapeHtml(row.beer || "")}</td>
-              <td class="mono">
-                ${formatNumber(displayVolume, 1)} ${displayUnit === "cans" ? "cans" : "L"}
-              </td>
+              <td>${productsDisplay || ""}</td>
               <td class="mono">${formatCurrency(row.value || 0)}</td>
+              <td>
+                <span class="chip">${status === "paid" ? "Paid" : "Unpaid"}</span>
+              </td>
               <td>${escapeHtml(row.notes || "")}</td>
-              <td><button class="mini-delete" data-sale-id="${row.id}">Delete</button></td>
+              <td>
+                <button class="mini-delete" data-sale-id="${row.id}">Delete</button>
+              </td>
             </tr>
           `;
         });
@@ -1196,16 +1407,28 @@
 
     function drawChart() {
       const monthly = {};
+
       state.sales.forEach(row => {
-        if (!row.date) return;
-        const key = row.date.slice(0, 7);
+        const baseDate = row.invoiceDate || row.date;
+        if (!baseDate) return;
+        const key = baseDate.slice(0, 7);
         if (!key) return;
-        if (!monthly[key]) monthly[key] = 0;
-        monthly[key] += Number(row.value || 0);
+
+        const status = row.status || "paid";
+        if (!monthly[key]) {
+          monthly[key] = { paid: 0, unpaid: 0 };
+        }
+        const v = Number(row.value || 0);
+        if (status === "paid") {
+          monthly[key].paid += v;
+        } else {
+          monthly[key].unpaid += v;
+        }
       });
 
       const labels = Object.keys(monthly).sort();
-      const values = labels.map(label => monthly[label]);
+      const paidValues = labels.map(label => monthly[label].paid);
+      const unpaidValues = labels.map(label => monthly[label].unpaid);
 
       const labelText = labels.length
         ? `${labels[0]} – ${labels[labels.length - 1]}`
@@ -1217,6 +1440,7 @@
       const gridColor = styles.getPropertyValue("--color-divider").trim();
       const primary = styles.getPropertyValue("--color-primary").trim();
       const highlight = styles.getPropertyValue("--color-primary-highlight").trim();
+      const unpaidColor = styles.getPropertyValue("--color-warning").trim() || "#d08b5a";
 
       if (state.chart) state.chart.destroy();
 
@@ -1227,14 +1451,28 @@
           labels,
           datasets: [
             {
-              label: "Revenue",
-              data: values,
+              label: "Paid revenue",
+              data: paidValues,
               borderColor: primary,
               backgroundColor: highlight,
-              fill: true,
+              fill: false,
               tension: 0.32,
               pointRadius: 4,
-              pointHoverRadius: 5
+              pointHoverRadius: 5,
+              borderWidth: 2,
+              borderDash: []
+            },
+            {
+              label: "Unpaid revenue",
+              data: unpaidValues,
+              borderColor: unpaidColor,
+              backgroundColor: "transparent",
+              fill: false,
+              tension: 0.32,
+              pointRadius: 4,
+              pointHoverRadius: 5,
+              borderWidth: 2,
+              borderDash: [6, 4]
             }
           ]
         },
@@ -1242,10 +1480,10 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false },
+            legend: { display: true },
             tooltip: {
               callbacks: {
-                label: ctx => formatCurrency(ctx.parsed.y)
+                label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`
               }
             }
           },
@@ -1285,6 +1523,11 @@
       refresh();
     }
 
+    function addStockMovement(row) {
+      state.stockMovements.push(row);
+      refresh();
+    }
+
     function askQuizConfirmation() {
       const a = Math.floor(Math.random() * 10) + 1;
       const b = Math.floor(Math.random() * 10) + 1;
@@ -1316,13 +1559,14 @@
 
     const recentSalesBodyEl = document.getElementById("recentSalesBody");
     recentSalesBodyEl.addEventListener("click", event => {
-      const btn = event.target.closest(".mini-delete");
-      if (!btn) return;
-      const saleId = btn.getAttribute("data-sale-id");
-      if (!saleId) return;
-      const confirmed = askQuizConfirmation();
-      if (!confirmed) return;
-      deleteSaleById(saleId);
+      const deleteBtn = event.target.closest(".mini-delete");
+      if (deleteBtn) {
+        const saleId = deleteBtn.getAttribute("data-sale-id");
+        if (!saleId) return;
+        const confirmed = askQuizConfirmation();
+        if (!confirmed) return;
+        deleteSaleById(saleId);
+      }
     });
 
     els.customerList.addEventListener("click", event => {
@@ -1342,6 +1586,8 @@
         phone: document.getElementById("customerPhone").value.trim(),
         email: document.getElementById("customerEmail").value.trim(),
         address: document.getElementById("customerAddress").value.trim(),
+        vatNumber: document.getElementById("customerVat").value.trim(),
+        orgNumber: document.getElementById("customerOrg").value.trim(),
         createdAt: new Date().toISOString()
       };
       if (!customer.name || !customer.address) return;
@@ -1350,6 +1596,72 @@
       showStatus(els.customerFeedback, "Customer added", "ok");
     });
 
+    function createProductRow(initial = {}) {
+      const rowId = uid("prod");
+      const div = document.createElement("div");
+      div.className = "product-row";
+      div.dataset.rowId = rowId;
+      div.innerHTML = `
+        <div class="form-grid">
+          <label>
+            Product name
+            <input type="text" class="prod-name" placeholder="Dat Lager" value="${escapeHtml(
+              initial.productName || ""
+            )}" required>
+          </label>
+          <label>
+            Product SKU / format
+            <input type="text" class="prod-sku" placeholder="33cl can, 30L keg" value="${escapeHtml(
+              initial.sku || ""
+            )}" required>
+          </label>
+          <label>
+            Quantity
+            <input type="number" class="prod-qty" step="0.01" min="0" placeholder="30" value="${
+              initial.quantity || ""
+            }" required>
+          </label>
+          <label>
+            Unit
+            <select class="prod-unit">
+              <option value="liters" ${
+                initial.unit === "liters" || !initial.unit ? "selected" : ""
+              }>Liters</option>
+              <option value="cans" ${initial.unit === "cans" ? "selected" : ""}>Cans</option>
+            </select>
+          </label>
+        </div>
+        <div class="inline">
+          <span class="badge">Row</span>
+          <button type="button" class="mini-delete" data-product-row-id="${rowId}">Remove</button>
+        </div>
+      `;
+      return div;
+    }
+
+    els.addProductRowBtn.addEventListener("click", () => {
+      els.saleProducts.appendChild(createProductRow());
+    });
+
+    els.saleProducts.addEventListener("click", event => {
+      const btn = event.target.closest("[data-product-row-id]");
+      if (!btn) return;
+      const id = btn.getAttribute("data-product-row-id");
+      const rowEl = els.saleProducts.querySelector(`[data-row-id="${id}"]`);
+      if (rowEl) rowEl.remove();
+    });
+
+    function gatherSaleProducts() {
+      const rows = Array.from(els.saleProducts.querySelectorAll(".product-row"));
+      return rows.map(row => {
+        const name = row.querySelector(".prod-name").value.trim();
+        const sku = row.querySelector(".prod-sku").value.trim();
+        const qty = Number(row.querySelector(".prod-qty").value || 0);
+        const unit = row.querySelector(".prod-unit").value;
+        return { productName: name, sku, quantity: qty, unit };
+      }).filter(p => p.productName && p.sku && p.quantity > 0);
+    }
+
     els.saleForm.addEventListener("submit", event => {
       event.preventDefault();
       if (!state.customers.length) {
@@ -1357,30 +1669,60 @@
         return;
       }
 
-      const rawVolume = Number(document.getElementById("saleVolume").value || 0);
-      const unit = document.getElementById("saleUnit").value;
-      const volumeLiters = unit === "cans" ? rawVolume / 3 : rawVolume;
+      const products = gatherSaleProducts();
+      if (!products.length) {
+        showStatus(els.saleFeedback, "Add at least one product row", "warn");
+        return;
+      }
+
+      const totalVolumeLiters = products.reduce((sum, p) => {
+        if (p.unit === "cans") return sum + p.quantity / 3;
+        return sum + p.quantity;
+      }, 0);
 
       const sale = {
         id: uid("sale"),
         customerId: document.getElementById("saleCustomer").value,
         date: document.getElementById("saleDate").value,
-        beer: document.getElementById("saleBeer").value.trim(),
+        invoiceDate: document.getElementById("saleInvoiceDate").value,
         invoice: document.getElementById("saleInvoice").value.trim(),
-        volume: volumeLiters,
-        unit,
-        rawVolume,
         value: Number(document.getElementById("saleValue").value || 0),
+        status: document.getElementById("saleStatus").value || "unpaid",
+        products,
+        totalVolumeLiters,
         notes: document.getElementById("saleNotes").value.trim(),
         createdAt: new Date().toISOString()
       };
 
       addSale(sale);
       els.saleForm.reset();
-      els.saleDate.value = new Date().toISOString().slice(0, 10);
+      els.saleDate.value = todayStr;
+      els.saleInvoiceDate.value = todayStr;
+      els.saleProducts.innerHTML = "";
       updateCustomerSelect();
       showStatus(els.saleFeedback, "Sale saved", "ok");
       switchSection("dashboard");
+    });
+
+    els.stockForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const row = {
+        id: uid("stock"),
+        productName: document.getElementById("stockProductName").value.trim(),
+        sku: document.getElementById("stockSku").value.trim(),
+        quantity: Number(document.getElementById("stockQty").value || 0),
+        batch: document.getElementById("stockBatch").value.trim(),
+        direction: document.getElementById("stockDirection").value,
+        notes: document.getElementById("stockNotes").value.trim(),
+        createdAt: new Date().toISOString()
+      };
+      if (!row.productName || !row.sku || !row.quantity) {
+        showStatus(els.stockFeedback, "Fill product name, SKU, and quantity", "warn");
+        return;
+      }
+      addStockMovement(row);
+      els.stockForm.reset();
+      showStatus(els.stockFeedback, "Stock row saved", "ok");
     });
 
     els.customerSearch.addEventListener("input", renderCustomers);
@@ -1390,7 +1732,8 @@
         {
           exportedAt: new Date().toISOString(),
           customers: state.customers,
-          sales: state.sales
+          sales: state.sales,
+          stockMovements: state.stockMovements
         },
         null,
         2
@@ -1413,6 +1756,9 @@
         const parsed = JSON.parse(text);
         state.customers = Array.isArray(parsed.customers) ? parsed.customers : [];
         state.sales = Array.isArray(parsed.sales) ? parsed.sales : [];
+        state.stockMovements = Array.isArray(parsed.stockMovements)
+          ? parsed.stockMovements
+          : [];
         refresh();
         switchSection("dashboard");
       } catch (e) {
@@ -1449,12 +1795,19 @@
         if (persisted) {
           state.customers = Array.isArray(persisted.customers) ? persisted.customers : [];
           state.sales = Array.isArray(persisted.sales) ? persisted.sales : [];
+          state.stockMovements = Array.isArray(persisted.stockMovements)
+            ? persisted.stockMovements
+            : [];
           if (persisted.theme === "light" || persisted.theme === "dark") {
             state.theme = persisted.theme;
             document.documentElement.setAttribute("data-theme", state.theme);
           }
         }
       } catch (e) {}
+      // ensure at least one product row is present for convenience
+      if (!els.saleProducts.children.length) {
+        els.saleProducts.appendChild(createProductRow());
+      }
       refresh();
     }
 
