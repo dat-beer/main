@@ -1,123 +1,660 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>dat sales</title>
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+
   <style>
-    :root, [data-theme="light"] {
+    :root,
+    [data-theme="light"] {
       --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
       --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
       --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
       --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
       --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
-      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem; --space-16: 4rem;
-      --color-bg:#f5f3ee; --color-surface:#f8f5ef; --color-surface-2:#fcfaf6; --color-surface-offset:#ece7df; --color-border:#d7d0c6; --color-divider:#dcd9d5;
-      --color-text:#111111; --color-text-muted:#5c5a54; --color-text-faint:#8b877f; --color-text-inverse:#f9f8f4;
-      --color-primary:#111111; --color-primary-hover:#2a2a2a; --color-primary-highlight:#e9e9e9;
-      --color-success:#437a22; --color-warning:#964219; --color-error:#a12c7b; --color-blue:#006494;
-      --radius-sm:0.375rem; --radius-md:0.5rem; --radius-lg:0.75rem; --radius-xl:1rem; --radius-full:9999px;
-      --shadow-sm:0 1px 2px oklch(0.2 0.01 80 / 0.06); --shadow-md:0 4px 12px oklch(0.2 0.01 80 / 0.08); --shadow-lg:0 12px 32px oklch(0.2 0.01 80 / 0.12);
-      --transition-interactive:180ms cubic-bezier(0.16,1,0.3,1);
-      --font-body:'Satoshi', 'Inter', sans-serif;
-      --font-display:'Satoshi', 'Inter', sans-serif;
-    }
-    [data-theme="dark"] {
-      --color-bg:#111111; --color-surface:#161616; --color-surface-2:#1c1c1c; --color-surface-offset:#222222; --color-border:#2f2f2f; --color-divider:#262626;
-      --color-text:#f6f2ea; --color-text-muted:#c2baaf; --color-text-faint:#8d867c; --color-text-inverse:#111111;
-      --color-primary:#f2eadf; --color-primary-hover:#ffffff; --color-primary-highlight:#2b2b2b;
-      --color-success:#7db55f; --color-warning:#d08b5a; --color-error:#db6ab3; --color-blue:#69a6cf;
-      --shadow-sm:0 1px 2px oklch(0 0 0 / 0.2); --shadow-md:0 4px 12px oklch(0 0 0 / 0.3); --shadow-lg:0 12px 32px oklch(0 0 0 / 0.4);
-    }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{-moz-text-size-adjust:none;-webkit-text-size-adjust:none;text-size-adjust:none;-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
-    body{min-height:100dvh;line-height:1.5;font-family:var(--font-body);font-size:var(--text-base);color:var(--color-text);background:var(--color-bg)}
-    img,svg,canvas{display:block;max-width:100%;height:auto}
-    input,button,textarea,select{font:inherit;color:inherit}
-    button{cursor:pointer;border:none;background:none}
-    a{color:inherit}
-    :focus-visible{outline:2px solid var(--color-primary);outline-offset:3px;border-radius:var(--radius-sm)}
-    .app{display:grid;grid-template-columns:280px 1fr;min-height:100dvh}
-    .sidebar{background:var(--color-surface);border-right:1px solid color-mix(in oklab,var(--color-text) 10%, transparent);padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6);position:sticky;top:0;height:100dvh;overflow:auto}
-    .brand{display:flex;align-items:center;gap:var(--space-3)}
-    .logo{min-width:96px;height:42px;border-radius:999px;background:var(--color-primary);color:var(--color-text-inverse);display:grid;place-items:center;box-shadow:none;padding-inline:0.35rem}
-    .brand h1{font-size:var(--text-lg);line-height:1.1}
-    .brand p{font-size:var(--text-xs);color:var(--color-text-muted)}
-    .nav{display:grid;gap:var(--space-2)}
-    .nav button{padding:0.8rem 0.9rem;border-radius:var(--radius-md);text-align:left;font-size:var(--text-sm);background:transparent}
-    .nav button.active,.nav button:hover{background:var(--color-surface-offset)}
-    .sidebar-footer{margin-top:auto;display:grid;gap:var(--space-3)}
-    .theme-toggle,.ghost-btn{display:flex;align-items:center;justify-content:center;gap:var(--space-2);min-height:44px;padding:0.8rem 1rem;border:1px solid color-mix(in oklab,var(--color-text) 12%, transparent);border-radius:var(--radius-md);background:var(--color-surface-2)}
-    .main{padding:var(--space-6);display:grid;gap:var(--space-6)}
-    .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-4);flex-wrap:wrap}
-    .topbar h2{font-size:var(--text-xl);line-height:1.05}
-    .topbar p{color:var(--color-text-muted);margin-top:var(--space-2);max-width:62ch}
-    .toolbar{display:flex;gap:var(--space-3);flex-wrap:wrap}
-    .btn{min-height:44px;padding:0.85rem 1rem;border-radius:var(--radius-md);font-size:var(--text-sm);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2)}
-    .btn-primary{background:var(--color-primary);color:var(--color-text-inverse)}
-    .btn-primary:hover{background:var(--color-primary-hover)}
-    .btn-secondary{background:var(--color-surface);border:1px solid color-mix(in oklab,var(--color-text) 12%, transparent)}
-    .grid{display:grid;gap:var(--space-4)}
-    .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
-    .card{background:var(--color-surface);border:1px solid color-mix(in oklab,var(--color-text) 10%, transparent);border-radius:var(--radius-xl);padding:var(--space-5);box-shadow:var(--shadow-sm)}
-    .card h3{font-size:var(--text-sm);color:var(--color-text-muted);margin-bottom:var(--space-3)}
-    .metric{font-size:clamp(1.6rem,1.1rem + 1vw,2.4rem);font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums lining-nums}
-    .meta{font-size:var(--text-xs);color:var(--color-text-muted);margin-top:var(--space-2)}
-    .layout-2{grid-template-columns:1.45fr 1fr}
-    .panel-title{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4);flex-wrap:wrap}
-    .panel-title h3{margin:0;color:var(--color-text);font-size:var(--text-lg)}
-    canvas{width:100%!important;height:320px!important}
-    form{display:grid;gap:var(--space-4)}
-    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}
-    label{display:grid;gap:var(--space-2);font-size:var(--text-sm);font-weight:700}
-    input,select,textarea{background:var(--color-surface-2);border:1px solid color-mix(in oklab,var(--color-text) 12%, transparent);border-radius:var(--radius-md);padding:0.85rem 0.9rem;min-height:44px}
-    textarea{min-height:96px;resize:vertical}
-    .help{font-size:var(--text-xs);color:var(--color-text-muted)}
-    .table-wrap{overflow:auto;border-radius:var(--radius-lg);border:1px solid color-mix(in oklab,var(--color-text) 10%, transparent)}
-    table{width:100%;border-collapse:collapse;font-size:var(--text-sm)}
-    th,td{padding:0.9rem 0.8rem;border-bottom:1px solid var(--color-divider);text-align:left;vertical-align:top}
-    th{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.06em;color:var(--color-text-muted);background:var(--color-surface-offset)}
-    tbody tr:hover{background:color-mix(in oklab,var(--color-primary) 4%, var(--color-surface))}
-    .pill{display:inline-flex;align-items:center;gap:0.35rem;padding:0.3rem 0.65rem;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:700;background:var(--color-primary-highlight);color:var(--color-primary)}
-    .customer-list{display:grid;gap:var(--space-3);max-height:420px;overflow:auto}
-    .customer-item{padding:var(--space-4);border:1px solid color-mix(in oklab,var(--color-text) 10%, transparent);border-radius:var(--radius-lg);background:var(--color-surface-2);display:grid;gap:var(--space-2)}
-    .customer-item strong{font-size:var(--text-sm)}
-    .customer-item p{font-size:var(--text-xs);color:var(--color-text-muted)}
-    .inline{display:flex;gap:var(--space-2);flex-wrap:wrap;align-items:center}
-    .status{padding:0.45rem 0.7rem;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:700}
-    .ok{background:color-mix(in oklab,var(--color-success) 16%, transparent);color:var(--color-success)}
-    .warn{background:color-mix(in oklab,var(--color-warning) 16%, transparent);color:var(--color-warning)}
-    .danger{background:color-mix(in oklab,var(--color-error) 16%, transparent);color:var(--color-error)}
-    .hidden{display:none !important}
-    .empty{padding:var(--space-8);border:1px dashed color-mix(in oklab,var(--color-text) 15%, transparent);border-radius:var(--radius-lg);text-align:center;color:var(--color-text-muted)}
-    .section{display:none}
-    .section.active{display:grid;gap:var(--space-5)}
-    .split{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
-    .map-import{padding:var(--space-4);border-radius:var(--radius-lg);background:var(--color-surface-offset);display:grid;gap:var(--space-3)}
-    .mini{font-size:var(--text-xs);color:var(--color-text-muted)}
-    .mono{font-variant-numeric:tabular-nums lining-nums}
-    @media (max-width: 1080px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.kpis,.layout-2,.split,.form-grid{grid-template-columns:1fr}}
-    
-    .auth-overlay{position:fixed;inset:0;display:grid;place-items:center;background:color-mix(in oklab,var(--color-bg) 88%, black 12%);z-index:30;padding:var(--space-4)}
-    .auth-card{width:min(100%,360px);background:var(--color-surface);border:1px solid color-mix(in oklab,var(--color-text) 10%, transparent);border-radius:var(--radius-xl);padding:var(--space-6);box-shadow:var(--shadow-lg)}
-    #loginForm{display:grid;gap:var(--space-4)}
-    .auth-error{font-size:var(--text-sm);color:var(--color-error);min-height:1.5em}
-    .locked .app{filter:blur(8px);pointer-events:none;user-select:none}
 
-    @media (max-width: 700px){.main{padding:var(--space-4)}.sidebar{padding:var(--space-4)}th,td{padding:0.7rem 0.6rem}.toolbar,.inline{width:100%}.toolbar > *{flex:1 1 220px}}
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-10: 2.5rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+
+      --color-bg: #f5f3ee;
+      --color-surface: #f8f5ef;
+      --color-surface-2: #fcfaf6;
+      --color-surface-offset: #ece7df;
+      --color-border: #d7d0c6;
+      --color-divider: #dcd9d5;
+
+      --color-text: #111111;
+      --color-text-muted: #5c5a54;
+      --color-text-faint: #8b877f;
+      --color-text-inverse: #f9f8f4;
+
+      --color-primary: #111111;
+      --color-primary-hover: #2a2a2a;
+      --color-primary-highlight: #e9e9e9;
+
+      --color-success: #437a22;
+      --color-warning: #964219;
+      --color-error: #a12c7b;
+      --color-blue: #006494;
+
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
+      --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
+      --shadow-lg: 0 12px 32px oklch(0.2 0.01 80 / 0.12);
+
+      --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+
+      --font-body: "Satoshi", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-display: "Satoshi", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --color-bg: #111111;
+      --color-surface: #161616;
+      --color-surface-2: #1c1c1c;
+      --color-surface-offset: #222222;
+      --color-border: #2f2f2f;
+      --color-divider: #262626;
+
+      --color-text: #f6f2ea;
+      --color-text-muted: #c2baaf;
+      --color-text-faint: #8d867c;
+      --color-text-inverse: #111111;
+
+      --color-primary: #f2eadf;
+      --color-primary-hover: #ffffff;
+      --color-primary-highlight: #2b2b2b;
+
+      --color-success: #7db55f;
+      --color-warning: #d08b5a;
+      --color-error: #db6ab3;
+      --color-blue: #69a6cf;
+
+      --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
+      --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
+      --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.4);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      -moz-text-size-adjust: none;
+      -webkit-text-size-adjust: none;
+      text-size-adjust: none;
+      -webkit-font-smoothing: antialiased;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100dvh;
+      line-height: 1.5;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background: var(--color-bg);
+    }
+
+    img,
+    svg,
+    canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    input,
+    button,
+    textarea,
+    select {
+      font: inherit;
+      color: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 3px;
+      border-radius: var(--radius-sm);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100dvh;
+    }
+
+    .sidebar {
+      background: var(--color-surface);
+      border-right: 1px solid color-mixin(oklab, var(--color-text) 10%, transparent);
+      padding: var(--space-6);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+      position: sticky;
+      top: 0;
+      height: 100dvh;
+      overflow: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .logo {
+      min-width: 96px;
+      height: 42px;
+      border-radius: 999px;
+      background: var(--color-primary);
+      color: var(--color-text-inverse);
+      display: grid;
+      place-items: center;
+      padding-inline: 0.35rem;
+      box-shadow: none;
+    }
+
+    .brand h1 {
+      font-size: var(--text-lg);
+      line-height: 1.1;
+    }
+
+    .brand p {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+    }
+
+    .nav {
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .nav button {
+      padding: 0.8rem 0.9rem;
+      border-radius: var(--radius-md);
+      text-align: left;
+      font-size: var(--text-sm);
+      background: transparent;
+      transition: background var(--transition-interactive);
+    }
+
+    .nav button.active,
+    .nav button:hover {
+      background: var(--color-surface-offset);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      display: grid;
+      gap: var(--space-3);
+    }
+
+    .theme-toggle,
+    .ghost-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      min-height: 44px;
+      padding: 0.8rem 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid color-mixin(oklab, var(--color-text) 12%, transparent);
+      background: var(--color-surface-2);
+      font-size: var(--text-sm);
+    }
+
+    .main {
+      padding: var(--space-6);
+      display: grid;
+      gap: var(--space-6);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+
+    .topbar h2 {
+      font-size: var(--text-xl);
+      line-height: 1.05;
+    }
+
+    .topbar p {
+      color: var(--color-text-muted);
+      margin-top: var(--space-2);
+      max-width: 62ch;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-height: 44px;
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-text-inverse);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+    }
+
+    .btn-secondary {
+      background: var(--color-surface);
+      border: 1px solid color-mixin(oklab, var(--color-text) 12%, transparent);
+    }
+
+    .grid {
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .kpis {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .card {
+      background: var(--color-surface);
+      border: 1px solid color-mixin(oklab, var(--color-text) 10%, transparent);
+      border-radius: var(--radius-xl);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card h3 {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-3);
+    }
+
+    .metric {
+      font-size: clamp(1.6rem, 1.1rem + 1vw, 2.4rem);
+      font-weight: 900;
+      line-height: 1.05;
+      font-variant-numeric: tabular-nums lining-nums;
+    }
+
+    .meta {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      margin-top: var(--space-2);
+    }
+
+    .layout-2 {
+      grid-template-columns: 1.45fr 1fr;
+    }
+
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+      flex-wrap: wrap;
+    }
+
+    .panel-title h3 {
+      margin: 0;
+      color: var(--color-text);
+      font-size: var(--text-lg);
+    }
+
+    .mini {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 320px !important;
+    }
+
+    form {
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-4);
+    }
+
+    label {
+      display: grid;
+      gap: var(--space-2);
+      font-size: var(--text-sm);
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      background: var(--color-surface-2);
+      border: 1px solid color-mixin(oklab, var(--color-text) 12%, transparent);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 0.9rem;
+      min-height: 44px;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .help {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      font-weight: 400;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border-radius: var(--radius-lg);
+      border: 1px solid color-mixin(oklab, var(--color-text) 10%, transparent);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+    }
+
+    th,
+    td {
+      padding: 0.9rem 0.8rem;
+      border-bottom: 1px solid var(--color-divider);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-muted);
+      background: var(--color-surface-offset);
+    }
+
+    tbody tr:hover {
+      background: color-mixin(oklab, var(--color-primary) 4%, var(--color-surface));
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: var(--radius-full);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      background: var(--color-primary-highlight);
+      color: var(--color-primary);
+    }
+
+    .customer-list {
+      display: grid;
+      gap: var(--space-3);
+      max-height: 420px;
+      overflow: auto;
+    }
+
+    .customer-item {
+      padding: var(--space-4);
+      border: 1px solid color-mixin(oklab, var(--color-text) 10%, transparent);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface-2);
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .customer-item strong {
+      font-size: var(--text-sm);
+    }
+
+    .customer-item p {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+    }
+
+    .inline {
+      display: flex;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .status {
+      padding: 0.45rem 0.7rem;
+      border-radius: var(--radius-full);
+      font-size: var(--text-xs);
+      font-weight: 700;
+    }
+
+    .ok {
+      background: color-mixin(oklab, var(--color-success) 16%, transparent);
+      color: var(--color-success);
+    }
+
+    .warn {
+      background: color-mixin(oklab, var(--color-warning) 16%, transparent);
+      color: var(--color-warning);
+    }
+
+    .danger {
+      background: color-mixin(oklab, var(--color-error) 16%, transparent);
+      color: var(--color-error);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .empty {
+      padding: var(--space-8);
+      border: 1px dashed color-mixin(oklab, var(--color-text) 15%, transparent);
+      border-radius: var(--radius-lg);
+      text-align: center;
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: grid;
+      gap: var(--space-5);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+    }
+
+    .mono {
+      font-variant-numeric: tabular-nums lining-nums;
+    }
+
+    .mini-delete {
+      font-size: var(--text-xs);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-full);
+      border: 1px solid color-mixin(oklab, var(--color-error) 16%, transparent);
+      color: var(--color-error);
+      background: color-mixin(oklab, var(--color-error) 4%, var(--color-surface));
+      white-space: nowrap;
+    }
+
+    .mini-delete:hover {
+      background: color-mixin(oklab, var(--color-error) 8%, var(--color-surface));
+    }
+
+    /* Auth overlay */
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: color-mixin(oklab, var(--color-bg) 88%, black 12%);
+      z-index: 30;
+      padding: var(--space-4);
+    }
+
+    .auth-card {
+      width: min(100%, 360px);
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      border: 1px solid color-mixin(oklab, var(--color-text) 10%, transparent);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-lg);
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .auth-card h1 {
+      font-size: var(--text-lg);
+    }
+
+    .auth-card p {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+    }
+
+    #loginForm {
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .auth-error {
+      font-size: var(--text-sm);
+      color: var(--color-error);
+      min-height: 1.5em;
+    }
+
+    .locked .app {
+      filter: blur(8px);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    @media (max-width: 1080px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: relative;
+        height: auto;
+      }
+
+      .kpis,
+      .layout-2,
+      .split,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .main {
+        padding: var(--space-4);
+      }
+
+      .sidebar {
+        padding: var(--space-4);
+      }
+
+      th,
+      td {
+        padding: 0.7rem 0.6rem;
+      }
+
+      .toolbar,
+      .inline {
+        width: 100%;
+      }
+
+      .toolbar {
+        flex: 1 1 220px;
+      }
+    }
   </style>
 </head>
 <body class="locked">
+  <!-- Auth overlay -->
   <section class="auth-overlay" id="authOverlay">
     <div class="auth-card">
+      <div>
+        <h1>dat sales</h1>
+        <p>Enter your credentials to access the internal trade dashboard.</p>
+      </div>
       <form id="loginForm">
-        <label>Username
+        <label>
+          Username
           <input id="loginUsername" type="text" autocomplete="username" required>
         </label>
-        <label>Password
+        <label>
+          Password
           <input id="loginPassword" type="password" autocomplete="current-password" required>
         </label>
         <button class="btn btn-primary" type="submit">Enter dashboard</button>
@@ -125,10 +662,11 @@
       </form>
     </div>
   </section>
+
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <div class="logo" aria-hidden="true" style="background:var(--color-primary); color:var(--color-text-inverse);">
+        <div class="logo" aria-hidden="true">
           <svg viewBox="0 0 160 52" width="82" height="26" fill="currentColor" aria-label="dat logo">
             <text x="6" y="36" font-size="34" font-family="Satoshi, sans-serif" font-weight="900" letter-spacing="-2">dat</text>
           </svg>
@@ -143,11 +681,12 @@
         <button class="active" data-section-target="dashboard">Dashboard</button>
         <button data-section-target="sales">Register sale</button>
         <button data-section-target="customers">Customers</button>
-        <button data-section-target="data">Import / export</button>
       </nav>
 
       <div class="sidebar-footer">
-        <button class="theme-toggle" data-theme-toggle aria-label="Switch theme">🌙 Theme</button>
+        <button class="theme-toggle" data-theme-toggle aria-label="Switch theme">
+          Theme
+        </button>
         <button class="ghost-btn" id="seedDemo">Load demo data</button>
       </div>
     </aside>
@@ -160,7 +699,7 @@
         </div>
         <div class="toolbar">
           <button class="btn btn-secondary" id="downloadDataBtn">Export JSON</button>
-          <label class="btn btn-secondary" for="restoreFile" style="cursor:pointer;">
+          <label class="btn btn-secondary" for="restoreFile" style="cursor: pointer;">
             Restore JSON
             <input id="restoreFile" type="file" accept="application/json" class="hidden">
           </label>
@@ -168,41 +707,67 @@
         </div>
       </header>
 
+      <!-- Dashboard -->
       <section id="dashboard" class="section active">
         <div class="grid kpis">
-          <article class="card"><h3>Total revenue</h3><div class="metric mono" id="kpiRevenue">0 kr</div><p class="meta" id="kpiRevenueMeta">No sales yet</p></article>
-          <article class="card"><h3>Total volume</h3><div class="metric mono" id="kpiVolume">0 L</div><p class="meta">Sum of litres sold</p></article>
-          <article class="card"><h3>Orders</h3><div class="metric mono" id="kpiOrders">0</div><p class="meta">Logged sale rows</p></article>
-          <article class="card"><h3>Active customers</h3><div class="metric mono" id="kpiCustomers">0</div><p class="meta">Customers with at least one sale</p></article>
+          <article class="card">
+            <h3>Total revenue</h3>
+            <div class="metric mono" id="kpiRevenue">0 kr</div>
+            <p class="meta" id="kpiRevenueMeta">No sales yet</p>
+          </article>
+          <article class="card">
+            <h3>Total volume</h3>
+            <div class="metric mono" id="kpiVolume">0 L</div>
+            <p class="meta">Sum of litres sold</p>
+          </article>
+          <article class="card">
+            <h3>Orders</h3>
+            <div class="metric mono" id="kpiOrders">0</div>
+            <p class="meta">Logged sale rows</p>
+          </article>
+          <article class="card">
+            <h3>Active customers</h3>
+            <div class="metric mono" id="kpiCustomers">0</div>
+            <p class="meta">Customers with at least one sale</p>
+          </article>
         </div>
 
-        <div class="grid">
+        <div class="grid layout-2">
           <article class="card">
             <div class="panel-title">
               <div>
                 <h3>Revenue over time</h3>
                 <p class="mini">Monthly total based on sale date</p>
               </div>
-              <span class="pill" id="chartWindowLabel">All months</span>
+              <div>
+                <span class="pill" id="chartWindowLabel">All months</span>
+              </div>
             </div>
             <canvas id="salesChart"></canvas>
           </article>
-        </div>
 
-        <article class="card">
-          <div class="panel-title">
-            <div>
-              <h3>Top customers</h3>
-              <p class="mini">By total revenue</p>
+          <article class="card">
+            <div class="panel-title">
+              <div>
+                <h3>Top customers</h3>
+                <p class="mini">By total revenue</p>
+              </div>
             </div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Customer</th><th>Revenue</th><th>Volume</th><th>Orders</th></tr></thead>
-              <tbody id="topCustomersBody"></tbody>
-            </table>
-          </div>
-        </article>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Customer</th>
+                    <th>Revenue</th>
+                    <th>Volume</th>
+                    <th>Orders</th>
+                  </tr>
+                </thead>
+                <tbody id="topCustomersBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
 
         <article class="card">
           <div class="panel-title">
@@ -213,38 +778,68 @@
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Date</th><th>Customer</th><th>Beer</th><th>Volume</th><th>Revenue</th><th>Notes</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Beer</th>
+                  <th>Volume</th>
+                  <th>Revenue</th>
+                  <th>Notes</th>
+                  <th></th>
+                </tr>
+              </thead>
               <tbody id="recentSalesBody"></tbody>
             </table>
           </div>
         </article>
       </section>
 
+      <!-- Register sale -->
       <section id="sales" class="section">
         <article class="card">
-          <div class="panel-title"><div><h3>Register sale</h3><p class="mini">Add one delivery, invoice, or keg sale.</p></div></div>
+          <div class="panel-title">
+            <div>
+              <h3>Register sale</h3>
+              <p class="mini">Add one delivery, invoice, or keg sale.</p>
+            </div>
+          </div>
           <form id="saleForm">
             <div class="form-grid">
-              <label>Customer
+              <label>
+                Customer
                 <select id="saleCustomer" required></select>
               </label>
-              <label>Sale date
+              <label>
+                Sale date
                 <input id="saleDate" type="date" required>
               </label>
-              <label>Beer / product
+              <label>
+                Beer product
                 <input id="saleBeer" type="text" placeholder="Dat Lager 30L keg" required>
               </label>
-              <label>Invoice / ref
+              <label>
+                Invoice ref
                 <input id="saleInvoice" type="text" placeholder="INV-2026-014">
               </label>
-              <label>Volume (litres)
-                <input id="saleVolume" type="number" step="0.1" min="0" placeholder="30" required>
+              <label>
+                Volume
+                <div class="inline">
+                  <input id="saleVolume" type="number" step="0.1" min="0" placeholder="30" required>
+                  <select id="saleUnit" required>
+                    <option value="liters" selected>Liters</option>
+                    <option value="cans">Cans</option>
+                  </select>
+                </div>
+                <span class="help">3 cans count as 1 liter in total volume.</span>
               </label>
-              <label>Total sale value (SEK)
+              <label>
+                Total sale value SEK
                 <input id="saleValue" type="number" step="0.01" min="0" placeholder="1450" required>
               </label>
             </div>
-            <label>Notes
+            <label>
+              Notes
               <textarea id="saleNotes" placeholder="Returned empties, seasonal tap takeover, payment terms..."></textarea>
             </label>
             <div class="inline">
@@ -255,31 +850,39 @@
         </article>
       </section>
 
+      <!-- Customers -->
       <section id="customers" class="section">
         <div class="grid split">
           <article class="card">
-            <div class="panel-title"><div><h3>Add customer</h3><p class="mini">You can add customers manually or import them from My Maps.</p></div></div>
+            <div class="panel-title">
+              <div>
+                <h3>Add customer</h3>
+                <p class="mini">You can add customers manually.</p>
+              </div>
+            </div>
             <form id="customerForm">
               <div class="form-grid">
-                <label>Customer name
+                <label>
+                  Customer name
                   <input id="customerName" type="text" placeholder="Bar / restaurant name" required>
                 </label>
-                <label>Contact person
+                <label>
+                  Contact person
                   <input id="customerContact" type="text" placeholder="Optional">
                 </label>
-                <label>Phone
+                <label>
+                  Phone
                   <input id="customerPhone" type="text" placeholder="Optional">
                 </label>
-                <label>Email
+                <label>
+                  Email
                   <input id="customerEmail" type="email" placeholder="Optional">
                 </label>
+                <label>
+                  Address
+                  <textarea id="customerAddress" placeholder="Street, postcode, city" required></textarea>
+                </label>
               </div>
-              <label>Address
-                <textarea id="customerAddress" placeholder="Street, postcode, city" required></textarea>
-              </label>
-              <label>Map link
-                <input id="customerMap" type="url" placeholder="Optional Google Maps link">
-              </label>
               <div class="inline">
                 <button class="btn btn-primary" type="submit">Add customer</button>
                 <span id="customerFeedback" class="status hidden"></span>
@@ -288,48 +891,21 @@
           </article>
 
           <article class="card">
-            <div class="panel-title"><div><h3>Customer list</h3><p class="mini">Searchable list inside the browser file.</p></div></div>
-            <label>Search
-              <input id="customerSearch" type="search" placeholder="Search name or address">
-            </label>
+            <div class="panel-title">
+              <div>
+                <h3>Customer list</h3>
+                <p class="mini">Searchable list inside the browser file.</p>
+              </div>
+            </div>
+            <div>
+              <label>
+                Search
+                <input id="customerSearch" type="search" placeholder="Search name or address">
+              </label>
+            </div>
             <div class="customer-list" id="customerList"></div>
           </article>
         </div>
-      </section>
-
-      <section id="data" class="section">
-        <article class="card map-import">
-          <div class="panel-title"><div><h3>Import customers from Google My Maps</h3><p class="mini">Best option: export your map as KML or GeoJSON, then import it here.</p></div></div>
-          <ol style="padding-left:1.2rem; display:grid; gap:0.55rem; color:var(--color-text-muted);">
-            <li>Open your My Maps map.</li>
-            <li>From the layer or map menu, export to KML/KMZ or GeoJSON.</li>
-            <li>Upload the file below. The app reads names, addresses, and coordinates when available.</li>
-          </ol>
-          <div class="inline">
-            <label class="btn btn-secondary" for="mapFile" style="cursor:pointer;">
-              Choose KML / GeoJSON
-              <input id="mapFile" type="file" accept=".kml,.kmz,.json,.geojson,application/json,application/vnd.google-earth.kml+xml" class="hidden">
-            </label>
-            <button class="btn btn-secondary" id="downloadTemplateBtn" type="button">Download CSV template</button>
-            <a class="btn btn-secondary" href="https://www.google.com/maps/d/u/0/viewer?mid=1Eh867dIgy3xxKm4Yf-K9oZWMe8qPtgM&usp=sharing" target="_blank" rel="noopener noreferrer">Open your My Maps</a>
-          </div>
-          <p class="help">If direct export from My Maps is difficult, use the manual customer form or paste data into a CSV matching the template and I can adapt the app later.</p>
-          <span id="importFeedback" class="status hidden"></span>
-        </article>
-
-        <article class="card">
-          <div class="panel-title"><div><h3>Data status</h3><p class="mini">All information stays inside this browser session unless you export it.</p></div></div>
-          <div class="grid split">
-            <div>
-              <p><strong>Customers:</strong> <span id="dataCustomerCount" class="mono">0</span></p>
-              <p><strong>Sales rows:</strong> <span id="dataSalesCount" class="mono">0</span></p>
-            </div>
-            <div>
-              <p><strong>Storage mode:</strong> in-memory only</p>
-              <p><strong>Backup:</strong> export JSON after every update</p>
-            </div>
-          </div>
-        </article>
       </section>
     </main>
   </div>
@@ -339,51 +915,69 @@
       customers: [],
       sales: [],
       chart: null,
-      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+      theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
       db: null
     };
 
-    const STORAGE = { dbName: 'dat-sales-db', store: 'appState', key: 'main' };
-    const AUTH = { username: 'dat', password: 'sale' };
-
-    const els = {
-      navButtons: [...document.querySelectorAll('[data-section-target]')],
-      sections: [...document.querySelectorAll('.section')],
-      title: document.getElementById('pageTitle'),
-      intro: document.getElementById('pageIntro'),
-      saleCustomer: document.getElementById('saleCustomer'),
-      saleDate: document.getElementById('saleDate'),
-      saleForm: document.getElementById('saleForm'),
-      saleFeedback: document.getElementById('saleFeedback'),
-      customerForm: document.getElementById('customerForm'),
-      customerFeedback: document.getElementById('customerFeedback'),
-      customerList: document.getElementById('customerList'),
-      customerSearch: document.getElementById('customerSearch'),
-      importFeedback: document.getElementById('importFeedback'),
-      mapFile: document.getElementById('mapFile'),
-      restoreFile: document.getElementById('restoreFile'),
-      authOverlay: document.getElementById('authOverlay'),
-      loginForm: document.getElementById('loginForm'),
-      loginUsername: document.getElementById('loginUsername'),
-      loginPassword: document.getElementById('loginPassword'),
-      loginError: document.getElementById('loginError')
+    const STORAGE = {
+      dbName: "dat-sales-db",
+      store: "appState",
+      key: "main"
     };
 
-    document.documentElement.setAttribute('data-theme', state.theme);
-    els.saleDate.value = new Date().toISOString().slice(0,10);
+    const AUTH = {
+      username: "dat",
+      password: "dat"
+    };
 
-    function openDb(){
+    const els = {
+      navButtons: document.querySelectorAll("[data-section-target]"),
+      sections: document.querySelectorAll(".section"),
+      title: document.getElementById("pageTitle"),
+      intro: document.getElementById("pageIntro"),
+      saleCustomer: document.getElementById("saleCustomer"),
+      saleDate: document.getElementById("saleDate"),
+      saleForm: document.getElementById("saleForm"),
+      saleFeedback: document.getElementById("saleFeedback"),
+      customerForm: document.getElementById("customerForm"),
+      customerFeedback: document.getElementById("customerFeedback"),
+      customerList: document.getElementById("customerList"),
+      customerSearch: document.getElementById("customerSearch"),
+      restoreFile: document.getElementById("restoreFile"),
+      authOverlay: document.getElementById("authOverlay"),
+      loginForm: document.getElementById("loginForm"),
+      loginUsername: document.getElementById("loginUsername"),
+      loginPassword: document.getElementById("loginPassword"),
+      loginError: document.getElementById("loginError")
+    };
+
+    document.documentElement.setAttribute("data-theme", state.theme);
+    els.saleDate.value = new Date().toISOString().slice(0, 10);
+
+    function openDb() {
       return new Promise((resolve, reject) => {
         const req = indexedDB.open(STORAGE.dbName, 1);
-        req.onupgradeneeded = () => { req.result.createObjectStore(STORAGE.store); };
-        req.onsuccess = () => resolve(req.result);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(STORAGE.store)) {
+            db.createObjectStore(STORAGE.store);
+          }
+        };
+        req.onsuccess = () => {
+          state.db = req.result;
+          resolve(req.result);
+        };
         req.onerror = () => reject(req.error);
       });
     }
 
-    function loadPersistedState(){
+    function loadPersistedState() {
       return new Promise((resolve, reject) => {
-        const tx = state.db.transaction(STORAGE.store, 'readonly');
+        if (!state.db) {
+          resolve(null);
+          return;
+        }
+        const tx = state.db.transaction(STORAGE.store, "readonly");
         const store = tx.objectStore(STORAGE.store);
         const req = store.get(STORAGE.key);
         req.onsuccess = () => resolve(req.result || null);
@@ -391,177 +985,334 @@
       });
     }
 
-    function savePersistedState(){
+    function savePersistedState() {
       if (!state.db) return Promise.resolve();
       return new Promise((resolve, reject) => {
-        const tx = state.db.transaction(STORAGE.store, 'readwrite');
+        const tx = state.db.transaction(STORAGE.store, "readwrite");
         const store = tx.objectStore(STORAGE.store);
-        store.put({ customers: state.customers, sales: state.sales, theme: state.theme, savedAt: new Date().toISOString() }, STORAGE.key);
+        store.put(
+          {
+            customers: state.customers,
+            sales: state.sales,
+            theme: state.theme,
+            savedAt: new Date().toISOString()
+          },
+          STORAGE.key
+        );
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
       });
     }
 
     const pageCopy = {
-      dashboard: ['Dashboard','Track revenue, volume, and customer performance across your local trade accounts.'],
-      sales: ['Register sale','Log every keg, can drop, or invoice line with date, value, and volume.'],
-      customers: ['Customers','Manage trade accounts and add new venues as you grow.'],
-      data: ['Import / export','Bring in customers from My Maps and keep backups of the data file.']
+      dashboard: {
+        title: "Dashboard",
+        intro: "Track revenue, volume, and customer performance across your local trade accounts."
+      },
+      sales: {
+        title: "Register sale",
+        intro: "Log every keg, can drop, or invoice line with date, value, and volume."
+      },
+      customers: {
+        title: "Customers",
+        intro: "Manage trade accounts and add new venues as you grow."
+      }
     };
 
-    function formatCurrency(value){ return new Intl.NumberFormat('sv-SE',{style:'currency',currency:'SEK',maximumFractionDigits:0}).format(value || 0); }
-    function formatNumber(value, digits=0){ return new Intl.NumberFormat('sv-SE',{maximumFractionDigits:digits,minimumFractionDigits:digits}).format(value || 0); }
-    function showStatus(el, text, kind='ok'){ el.textContent = text; el.className = `status ${kind}`; }
-    function hideStatus(el){ el.className = 'status hidden'; }
-    function uid(prefix){ return `${prefix}_${Math.random().toString(36).slice(2,10)}`; }
-
-    function switchSection(id){
-      els.sections.forEach(section => section.classList.toggle('active', section.id === id));
-      els.navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.sectionTarget === id));
-      const [title, intro] = pageCopy[id];
-      els.title.textContent = title;
-      els.intro.textContent = intro;
+    function formatCurrency(value) {
+      return new Intl.NumberFormat("sv-SE", {
+        style: "currency",
+        currency: "SEK",
+        maximumFractionDigits: 0
+      }).format(value || 0);
     }
 
-    els.navButtons.forEach(btn => btn.addEventListener('click', () => switchSection(btn.dataset.sectionTarget)));
-    document.querySelectorAll('[data-section-jump]').forEach(btn => btn.addEventListener('click', () => switchSection(btn.dataset.sectionJump)));
+    function formatNumber(value, digits = 0) {
+      return new Intl.NumberFormat("sv-SE", {
+        maximumFractionDigits: digits,
+        minimumFractionDigits: digits
+      }).format(value || 0);
+    }
 
-    document.querySelector('[data-theme-toggle]').addEventListener('click', () => {
-      state.theme = state.theme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', state.theme);
-      document.querySelector('[data-theme-toggle]').textContent = state.theme === 'dark' ? '☀️ Theme' : '🌙 Theme';
-      drawChart();
+    function showStatus(el, text, kind) {
+      el.textContent = text;
+      el.className = "status " + kind;
+    }
+
+    function hideStatus(el) {
+      el.className = "status hidden";
+    }
+
+    function uid(prefix) {
+      return prefix + Math.random().toString(36).slice(2, 10);
+    }
+
+    function switchSection(id) {
+      els.sections.forEach(section => {
+        section.classList.toggle("active", section.id === id);
+      });
+      els.navButtons.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.sectionTarget === id);
+      });
+      const copy = pageCopy[id] || pageCopy.dashboard;
+      els.title.textContent = copy.title;
+      els.intro.textContent = copy.intro;
+    }
+
+    els.navButtons.forEach(btn => {
+      btn.addEventListener("click", () => switchSection(btn.dataset.sectionTarget));
+    });
+
+    document.querySelectorAll("[data-section-jump]").forEach(btn => {
+      btn.addEventListener("click", () => switchSection(btn.dataset.sectionJump));
+    });
+
+    document.querySelector("[data-theme-toggle]").addEventListener("click", () => {
+      state.theme = state.theme === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", state.theme);
       savePersistedState().catch(() => {});
     });
 
-    function updateCustomerSelect(){
+    function updateCustomerSelect() {
       const selected = els.saleCustomer.value;
-      els.saleCustomer.innerHTML = '';
+      els.saleCustomer.innerHTML = "";
       if (!state.customers.length) {
-        const opt = document.createElement('option');
-        opt.textContent = 'Add a customer first'; opt.value = '';
+        const opt = document.createElement("option");
+        opt.textContent = "Add a customer first";
+        opt.value = "";
         els.saleCustomer.appendChild(opt);
         return;
       }
-      state.customers.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(customer => {
-        const opt = document.createElement('option');
-        opt.value = customer.id; opt.textContent = customer.name;
-        if (customer.id === selected) opt.selected = true;
-        els.saleCustomer.appendChild(opt);
+      state.customers
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach(customer => {
+          const opt = document.createElement("option");
+          opt.value = customer.id;
+          opt.textContent = customer.name;
+          if (customer.id === selected) opt.selected = true;
+          els.saleCustomer.appendChild(opt);
+        });
+    }
+
+    function escapeHtml(str) {
+      return (str || "").replace(/[&<>"']/g, tag => {
+        const chars = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;"
+        };
+        return chars[tag] || tag;
       });
     }
 
-    function renderCustomers(){
+    function renderCustomers() {
       const q = els.customerSearch.value.trim().toLowerCase();
-      const filtered = state.customers.filter(c => [c.name,c.address,c.contact,c.email,c.phone].join(' ').toLowerCase().includes(q));
-      els.customerList.innerHTML = '';
-      if (!filtered.length){
-        els.customerList.innerHTML = '<div class="empty">No customer matches your search.</div>';
+      const filtered = state.customers.filter(c =>
+        [c.name, c.address, c.contact, c.email, c.phone]
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      );
+
+      els.customerList.innerHTML = "";
+      if (!filtered.length) {
+        els.customerList.innerHTML =
+          '<div class="empty">No customer matches your search.</div>';
         return;
       }
-      filtered.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(customer => {
-        const revenue = state.sales.filter(s => s.customerId === customer.id).reduce((sum, row) => sum + Number(row.value), 0);
-        const orders = state.sales.filter(s => s.customerId === customer.id).length;
-        const div = document.createElement('article');
-        div.className = 'customer-item';
-        div.innerHTML = `
-          <div class="inline" style="justify-content:space-between; align-items:flex-start;">
-            <div>
-              <strong>${escapeHtml(customer.name)}</strong>
-              <p>${escapeHtml(customer.address || 'No address')}</p>
+
+      filtered
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach(customer => {
+          const revenue = state.sales
+            .filter(s => s.customerId === customer.id)
+            .reduce((sum, row) => sum + Number(row.value || 0), 0);
+          const orders = state.sales.filter(s => s.customerId === customer.id).length;
+
+          const div = document.createElement("article");
+          div.className = "customer-item";
+          div.innerHTML = `
+            <div class="inline" style="justify-content: space-between; align-items: flex-start;">
+              <div>
+                <strong>${escapeHtml(customer.name)}</strong>
+                <p>${escapeHtml(customer.address) || "No address"}</p>
+              </div>
+              <div>
+                <span class="pill">orders ${orders}</span>
+              </div>
             </div>
-            <span class="pill">${orders} orders</span>
-          </div>
-          <p>${customer.contact ? `Contact: ${escapeHtml(customer.contact)} · ` : ''}${customer.phone ? `${escapeHtml(customer.phone)} · ` : ''}${customer.email ? escapeHtml(customer.email) : ''}</p>
-          <div class="inline"><span class="mini mono">Revenue: ${formatCurrency(revenue)}</span>${customer.mapUrl ? `<a class="mini" href="${customer.mapUrl}" target="_blank" rel="noopener noreferrer">Map</a>` : ''}</div>
-        `;
-        els.customerList.appendChild(div);
-      });
+            <p>${customer.contact ? "Contact: " + escapeHtml(customer.contact) : ""} ${customer.phone ? escapeHtml(customer.phone) : ""} ${customer.email ? escapeHtml(customer.email) : ""}</p>
+            <div class="inline">
+              <span class="mini mono">Revenue ${formatCurrency(revenue)}</span>
+            </div>
+          `;
+          els.customerList.appendChild(div);
+        });
     }
 
-    function escapeHtml(str=''){ return str.replace(/[&<>"]/g, tag => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[tag] || tag)); }
-
-    function aggregate(){
+    function aggregate() {
       const totals = {
         revenue: state.sales.reduce((sum, row) => sum + Number(row.value || 0), 0),
         volume: state.sales.reduce((sum, row) => sum + Number(row.volume || 0), 0),
         orders: state.sales.length,
         activeCustomers: new Set(state.sales.map(row => row.customerId)).size
       };
-      document.getElementById('kpiRevenue').textContent = formatCurrency(totals.revenue);
-      document.getElementById('kpiVolume').textContent = `${formatNumber(totals.volume,1)} L`;
-      document.getElementById('kpiOrders').textContent = formatNumber(totals.orders);
-      document.getElementById('kpiCustomers').textContent = formatNumber(totals.activeCustomers);
-      document.getElementById('kpiRevenueMeta').textContent = totals.orders ? `${formatCurrency(totals.revenue / totals.orders)} average per order` : 'No sales yet';
-      document.getElementById('dataCustomerCount').textContent = formatNumber(state.customers.length);
-      document.getElementById('dataSalesCount').textContent = formatNumber(state.sales.length);
+
+      document.getElementById("kpiRevenue").textContent = formatCurrency(totals.revenue);
+      document.getElementById("kpiVolume").textContent = formatNumber(totals.volume, 1) + " L";
+      document.getElementById("kpiOrders").textContent = formatNumber(totals.orders);
+      document.getElementById("kpiCustomers").textContent = formatNumber(
+        totals.activeCustomers
+      );
+
+      document.getElementById("kpiRevenueMeta").textContent = totals.orders
+        ? `${formatCurrency(totals.revenue / totals.orders)} average per order`
+        : "No sales yet";
     }
 
-    function renderTables(){
-      const topBody = document.getElementById('topCustomersBody');
-      topBody.innerHTML = '';
-      const ranked = state.customers.map(customer => {
-        const sales = state.sales.filter(s => s.customerId === customer.id);
-        return {
-          name: customer.name,
-          revenue: sales.reduce((sum, row) => sum + Number(row.value || 0), 0),
-          volume: sales.reduce((sum, row) => sum + Number(row.volume || 0), 0),
-          orders: sales.length
-        };
-      }).filter(row => row.orders > 0).sort((a,b)=>b.revenue - a.revenue).slice(0,8);
+    function renderTables() {
+      const topBody = document.getElementById("topCustomersBody");
+      topBody.innerHTML = "";
+
+      const ranked = state.customers
+        .map(customer => {
+          const sales = state.sales.filter(s => s.customerId === customer.id);
+          const revenue = sales.reduce((sum, row) => sum + Number(row.value || 0), 0);
+          const volume = sales.reduce((sum, row) => sum + Number(row.volume || 0), 0);
+          const orders = sales.length;
+          return { name: customer.name, revenue, volume, orders };
+        })
+        .filter(row => row.orders > 0)
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 8);
+
       if (!ranked.length) {
-        topBody.innerHTML = '<tr><td colspan="4">No sales yet.</td></tr>';
+        topBody.innerHTML = `<tr><td colspan="4">No sales yet.</td></tr>`;
       } else {
         ranked.forEach(row => {
-          topBody.innerHTML += `<tr><td>${escapeHtml(row.name)}</td><td class="mono">${formatCurrency(row.revenue)}</td><td class="mono">${formatNumber(row.volume,1)} L</td><td class="mono">${row.orders}</td></tr>`;
+          topBody.innerHTML += `
+            <tr>
+              <td>${escapeHtml(row.name)}</td>
+              <td class="mono">${formatCurrency(row.revenue)}</td>
+              <td class="mono">${formatNumber(row.volume, 1)} L</td>
+              <td class="mono">${row.orders}</td>
+            </tr>
+          `;
         });
       }
 
-      const recentBody = document.getElementById('recentSalesBody');
-      recentBody.innerHTML = '';
-      const recent = state.sales.slice().sort((a,b)=>new Date(b.date) - new Date(a.date)).slice(0,12);
+      const recentBody = document.getElementById("recentSalesBody");
+      recentBody.innerHTML = "";
+      const recent = state.sales
+        .slice()
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 12);
+
       if (!recent.length) {
-        recentBody.innerHTML = '<tr><td colspan="6">No sales logged yet.</td></tr>';
+        recentBody.innerHTML = `<tr><td colspan="7">No sales logged yet.</td></tr>`;
       } else {
         recent.forEach(row => {
           const customer = state.customers.find(c => c.id === row.customerId);
-          recentBody.innerHTML += `<tr><td>${row.date}</td><td>${escapeHtml(customer?.name || 'Unknown')}</td><td>${escapeHtml(row.beer)}</td><td class="mono">${formatNumber(row.volume,1)} L</td><td class="mono">${formatCurrency(row.value)}</td><td>${escapeHtml(row.notes || '')}</td></tr>`;
+          const displayUnit = row.unit || "liters";
+          const displayVolume =
+            typeof row.rawVolume === "number" && row.rawVolume > 0
+              ? row.rawVolume
+              : row.volume;
+
+          recentBody.innerHTML += `
+            <tr>
+              <td>${row.date || ""}</td>
+              <td>${escapeHtml(customer?.name || "Unknown")}</td>
+              <td>${escapeHtml(row.beer || "")}</td>
+              <td class="mono">
+                ${formatNumber(displayVolume, 1)} ${displayUnit === "cans" ? "cans" : "L"}
+              </td>
+              <td class="mono">${formatCurrency(row.value || 0)}</td>
+              <td>${escapeHtml(row.notes || "")}</td>
+              <td><button class="mini-delete" data-sale-id="${row.id}">Delete</button></td>
+            </tr>
+          `;
         });
       }
     }
 
-    function drawChart(){
+    function drawChart() {
       const monthly = {};
       state.sales.forEach(row => {
-        const key = (row.date || '').slice(0,7);
+        if (!row.date) return;
+        const key = row.date.slice(0, 7);
         if (!key) return;
-        monthly[key] = (monthly[key] || 0) + Number(row.value || 0);
+        if (!monthly[key]) monthly[key] = 0;
+        monthly[key] += Number(row.value || 0);
       });
+
       const labels = Object.keys(monthly).sort();
-      document.getElementById('chartWindowLabel').textContent = labels.length ? `${labels[0]} → ${labels[labels.length - 1]}` : 'All months';
       const values = labels.map(label => monthly[label]);
+
+      const labelText = labels.length
+        ? `${labels[0]} – ${labels[labels.length - 1]}`
+        : "All months";
+      document.getElementById("chartWindowLabel").textContent = labelText;
+
       const styles = getComputedStyle(document.documentElement);
-      const textColor = styles.getPropertyValue('--color-text').trim();
-      const gridColor = styles.getPropertyValue('--color-divider').trim();
-      const primary = styles.getPropertyValue('--color-primary').trim();
-      const highlight = styles.getPropertyValue('--color-primary-highlight').trim();
+      const textColor = styles.getPropertyValue("--color-text").trim();
+      const gridColor = styles.getPropertyValue("--color-divider").trim();
+      const primary = styles.getPropertyValue("--color-primary").trim();
+      const highlight = styles.getPropertyValue("--color-primary-highlight").trim();
+
       if (state.chart) state.chart.destroy();
-      state.chart = new Chart(document.getElementById('salesChart'), {
-        type: 'line',
-        data: { labels, datasets: [{ label: 'Revenue', data: values, borderColor: primary, backgroundColor: highlight, fill: true, tension: 0.32, pointRadius: 4, pointHoverRadius: 5 }]},
+
+      const ctx = document.getElementById("salesChart");
+      state.chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Revenue",
+              data: values,
+              borderColor: primary,
+              backgroundColor: highlight,
+              fill: true,
+              tension: 0.32,
+              pointRadius: 4,
+              pointHoverRadius: 5
+            }
+          ]
+        },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display:false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.parsed.y) } } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => formatCurrency(ctx.parsed.y)
+              }
+            }
+          },
           scales: {
-            x: { ticks: { color: textColor }, grid: { color: gridColor } },
-            y: { ticks: { color: textColor, callback: value => formatCurrency(value) }, grid: { color: gridColor } }
+            x: {
+              ticks: { color: textColor },
+              grid: { color: gridColor }
+            },
+            y: {
+              ticks: {
+                color: textColor,
+                callback: value => formatCurrency(value)
+              },
+              grid: { color: gridColor }
+            }
           }
         }
       });
     }
 
-    function refresh(){
+    function refresh() {
       updateCustomerSelect();
       renderCustomers();
       aggregate();
@@ -570,291 +1321,273 @@
       savePersistedState().catch(() => {});
     }
 
-    function addCustomer(customer){ state.customers.push(customer); refresh(); }
-    function addSale(sale){ state.sales.push(sale); refresh(); }
+    function addCustomer(customer) {
+      state.customers.push(customer);
+      refresh();
+    }
 
-    els.customerForm.addEventListener('submit', event => {
+    function addSale(sale) {
+      state.sales.push(sale);
+      refresh();
+    }
+
+    function askQuizConfirmation() {
+      const a = Math.floor(Math.random() * 10) + 1;
+      const b = Math.floor(Math.random() * 10) + 1;
+      const answer = prompt(`Delete sale? To confirm, what is ${a} + ${b}?`);
+      if (answer === null) return false;
+      return Number(answer) === a + b;
+    }
+
+    function deleteSaleById(id) {
+      const index = state.sales.findIndex(s => s.id === id);
+      if (index === -1) return;
+      state.sales.splice(index, 1);
+      refresh();
+    }
+
+    const recentSalesBodyEl = document.getElementById("recentSalesBody");
+    recentSalesBodyEl.addEventListener("click", event => {
+      const btn = event.target.closest(".mini-delete");
+      if (!btn) return;
+      const saleId = btn.getAttribute("data-sale-id");
+      if (!saleId) return;
+      const confirmed = askQuizConfirmation();
+      if (!confirmed) return;
+      deleteSaleById(saleId);
+    });
+
+    els.customerForm.addEventListener("submit", event => {
       event.preventDefault();
       const customer = {
-        id: uid('cust'),
-        name: document.getElementById('customerName').value.trim(),
-        contact: document.getElementById('customerContact').value.trim(),
-        phone: document.getElementById('customerPhone').value.trim(),
-        email: document.getElementById('customerEmail').value.trim(),
-        address: document.getElementById('customerAddress').value.trim(),
-        mapUrl: document.getElementById('customerMap').value.trim(),
-        lat: null,
-        lng: null,
+        id: uid("cust"),
+        name: document.getElementById("customerName").value.trim(),
+        contact: document.getElementById("customerContact").value.trim(),
+        phone: document.getElementById("customerPhone").value.trim(),
+        email: document.getElementById("customerEmail").value.trim(),
+        address: document.getElementById("customerAddress").value.trim(),
         createdAt: new Date().toISOString()
       };
       if (!customer.name || !customer.address) return;
       addCustomer(customer);
       els.customerForm.reset();
-      showStatus(els.customerFeedback, 'Customer added', 'ok');
+      showStatus(els.customerFeedback, "Customer added", "ok");
     });
 
-    els.saleForm.addEventListener('submit', event => {
+    els.saleForm.addEventListener("submit", event => {
       event.preventDefault();
-      if (!state.customers.length) { showStatus(els.saleFeedback, 'Add a customer first', 'warn'); return; }
+      if (!state.customers.length) {
+        showStatus(els.saleFeedback, "Add a customer first", "warn");
+        return;
+      }
+
+      const rawVolume = Number(document.getElementById("saleVolume").value || 0);
+      const unit = document.getElementById("saleUnit").value; // "liters" or "cans"
+      const volumeLiters = unit === "cans" ? rawVolume / 3 : rawVolume;
+
       const sale = {
-        id: uid('sale'),
-        customerId: document.getElementById('saleCustomer').value,
-        date: document.getElementById('saleDate').value,
-        beer: document.getElementById('saleBeer').value.trim(),
-        invoice: document.getElementById('saleInvoice').value.trim(),
-        volume: Number(document.getElementById('saleVolume').value || 0),
-        value: Number(document.getElementById('saleValue').value || 0),
-        notes: document.getElementById('saleNotes').value.trim(),
+        id: uid("sale"),
+        customerId: document.getElementById("saleCustomer").value,
+        date: document.getElementById("saleDate").value,
+        beer: document.getElementById("saleBeer").value.trim(),
+        invoice: document.getElementById("saleInvoice").value.trim(),
+        volume: volumeLiters,
+        unit,
+        rawVolume,
+        value: Number(document.getElementById("saleValue").value || 0),
+        notes: document.getElementById("saleNotes").value.trim(),
         createdAt: new Date().toISOString()
       };
+
       addSale(sale);
       els.saleForm.reset();
-      els.saleDate.value = new Date().toISOString().slice(0,10);
+      els.saleDate.value = new Date().toISOString().slice(0, 10);
       updateCustomerSelect();
-      showStatus(els.saleFeedback, 'Sale saved', 'ok');
-      switchSection('dashboard');
+      showStatus(els.saleFeedback, "Sale saved", "ok");
+      switchSection("dashboard");
     });
 
-    els.customerSearch.addEventListener('input', renderCustomers);
+    els.customerSearch.addEventListener("input", renderCustomers);
 
-    function exportJson(){
-      const payload = JSON.stringify({ exportedAt: new Date().toISOString(), customers: state.customers, sales: state.sales }, null, 2);
-      const blob = new Blob([payload], {type:'application/json'});
-      const a = document.createElement('a');
+    function exportJson() {
+      const payload = JSON.stringify(
+        {
+          exportedAt: new Date().toISOString(),
+          customers: state.customers,
+          sales: state.sales
+        },
+        null,
+        2
+      );
+      const blob = new Blob([payload], { type: "application/json" });
+      const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `beer-sales-backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.download = "beer-sales-backup-" + new Date().toISOString().slice(0, 10) + ".json";
       a.click();
       URL.revokeObjectURL(a.href);
     }
 
-    document.getElementById('downloadDataBtn').addEventListener('click', exportJson);
-    els.restoreFile.addEventListener('change', async event => {
+    document.getElementById("downloadDataBtn").addEventListener("click", exportJson);
+
+    els.restoreFile.addEventListener("change", async event => {
       const file = event.target.files[0];
       if (!file) return;
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      state.customers = Array.isArray(parsed.customers) ? parsed.customers : [];
-      state.sales = Array.isArray(parsed.sales) ? parsed.sales : [];
-      function unlockApp(){
-      document.body.classList.remove('locked');
-      els.authOverlay.style.display = 'none';
-    }
-
-    els.loginForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      const ok = els.loginUsername.value === AUTH.username && els.loginPassword.value === AUTH.password;
-      if (!ok) {
-        els.loginError.textContent = 'Wrong username or password.';
-        return;
-      }
-      els.loginError.textContent = '';
-      unlockApp();
-    });
-
-    (async function init(){
-      try {
-        state.db = await openDb();
-        const persisted = await loadPersistedState();
-        if (persisted) {
-          state.customers = Array.isArray(persisted.customers) ? persisted.customers : [];
-          state.sales = Array.isArray(persisted.sales) ? persisted.sales : [];
-          if (persisted.theme === 'light' || persisted.theme === 'dark') {
-            state.theme = persisted.theme;
-            document.documentElement.setAttribute('data-theme', state.theme);
-          }
-        }
-      } catch (e) {}
-      refresh();
-    })();
-      showStatus(els.importFeedback, 'Backup restored', 'ok');
-      switchSection('dashboard');
-    });
-
-    function downloadCsvTemplate(){
-      const rows = [
-        ['name','address','contact','phone','email','mapUrl'],
-        ['Example Bar','Examplegatan 1, Malmö','Anna','0700000000','anna@example.com','https://maps.google.com']
-      ].map(row => row.map(cell => `"${String(cell).replaceAll('"','""')}"`).join(',')).join('\n');
-      const blob = new Blob([rows], {type:'text/csv;charset=utf-8'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'customer-import-template.csv';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-    document.getElementById('downloadTemplateBtn').addEventListener('click', downloadCsvTemplate);
-
-    function parseXmlText(text){ return new DOMParser().parseFromString(text, 'text/xml'); }
-
-    function parseKml(text){
-      const xml = parseXmlText(text);
-      const placemarks = [...xml.getElementsByTagName('Placemark')];
-      const imported = [];
-      placemarks.forEach(node => {
-        const name = node.getElementsByTagName('name')[0]?.textContent?.trim() || 'Unnamed customer';
-        const address = node.getElementsByTagName('address')[0]?.textContent?.trim() || node.getElementsByTagName('description')[0]?.textContent?.replace(/<[^>]+>/g, ' ')?.trim() || '';
-        const coordText = node.getElementsByTagName('coordinates')[0]?.textContent?.trim();
-        let mapUrl = '';
-        if (coordText) {
-          const [lng, lat] = coordText.split(',').map(Number);
-          if (!Number.isNaN(lat) && !Number.isNaN(lng)) mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-        }
-        const coords = coordText ? coordText.split(',').map(Number) : [];
-        imported.push({ id: uid('cust'), name, address, contact:'', phone:'', email:'', mapUrl, lat: coords[1] ?? null, lng: coords[0] ?? null, createdAt:new Date().toISOString() });
-      });
-      return imported;
-    }
-
-    function parseGeoJson(text){
-      const data = JSON.parse(text);
-      const features = Array.isArray(data.features) ? data.features : [];
-      return features.map(feature => {
-        const p = feature.properties || {};
-        const coords = feature.geometry?.coordinates || [];
-        const [lng, lat] = coords;
-        return {
-          id: uid('cust'),
-          name: p.name || p.title || p.Name || 'Unnamed customer',
-          address: p.address || p.description || p.Address || '',
-          contact:'', phone:'', email:'',
-          mapUrl: (!Number.isNaN(lat) && !Number.isNaN(lng)) ? `https://www.google.com/maps?q=${lat},${lng}` : '',
-          lat: !Number.isNaN(lat) ? lat : null,
-          lng: !Number.isNaN(lng) ? lng : null,
-          createdAt:new Date().toISOString()
-        };
-      });
-    }
-
-    els.mapFile.addEventListener('change', async event => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const name = file.name.toLowerCase();
-      if (name.endsWith('.kmz')) {
-        showStatus(els.importFeedback, 'KMZ is zipped. Export as KML or GeoJSON first.', 'warn');
-        return;
-      }
       try {
         const text = await file.text();
-        const imported = name.endsWith('.kml') ? parseKml(text) : parseGeoJson(text);
-        const existingKeys = new Set(state.customers.map(c => `${c.name}|${c.address}`.toLowerCase()));
-        const deduped = imported.filter(c => !existingKeys.has(`${c.name}|${c.address}`.toLowerCase()));
-        state.customers.push(...deduped);
-        function unlockApp(){
-      document.body.classList.remove('locked');
-      els.authOverlay.style.display = 'none';
-    }
-
-    els.loginForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      const ok = els.loginUsername.value === AUTH.username && els.loginPassword.value === AUTH.password;
-      if (!ok) {
-        els.loginError.textContent = 'Wrong username or password.';
-        return;
-      }
-      els.loginError.textContent = '';
-      unlockApp();
-    });
-
-    (async function init(){
-      try {
-        state.db = await openDb();
-        const persisted = await loadPersistedState();
-        if (persisted) {
-          state.customers = Array.isArray(persisted.customers) ? persisted.customers : [];
-          state.sales = Array.isArray(persisted.sales) ? persisted.sales : [];
-          if (persisted.theme === 'light' || persisted.theme === 'dark') {
-            state.theme = persisted.theme;
-            document.documentElement.setAttribute('data-theme', state.theme);
-          }
-        }
-      } catch (e) {}
-      refresh();
-    })();
-        showStatus(els.importFeedback, `Imported ${deduped.length} customers`, 'ok');
-        switchSection('customers');
-      } catch (error) {
-        showStatus(els.importFeedback, 'Import failed. Try KML or GeoJSON export from My Maps.', 'danger');
+        const parsed = JSON.parse(text);
+        state.customers = Array.isArray(parsed.customers) ? parsed.customers : [];
+        state.sales = Array.isArray(parsed.sales) ? parsed.sales : [];
+        refresh();
+        switchSection("dashboard");
+      } catch (e) {
+        alert("Restore failed. Check that this is a valid backup file.");
+      } finally {
+        event.target.value = "";
       }
     });
 
-    document.getElementById('seedDemo').addEventListener('click', () => {
+    document.getElementById("seedDemo").addEventListener("click", () => {
       state.customers = [
-        {id:'cust_1', name:'Möllan Taproom', address:'Bergsgatan 10, Malmö', contact:'Sara', phone:'070100200', email:'sara@mollan.se', mapUrl:'https://www.google.com/maps?q=55.5934,13.0095', lat:55.5934, lng:13.0095, createdAt:new Date().toISOString()},
-        {id:'cust_2', name:'Dockside Bistro', address:'Nordenskiöldsgatan 24, Malmö', contact:'Lukas', phone:'070200300', email:'order@dockside.se', mapUrl:'https://www.google.com/maps?q=55.6098,12.9946', lat:55.6098, lng:12.9946, createdAt:new Date().toISOString()},
-        {id:'cust_3', name:'Lund Craft Corner', address:'Stora Södergatan 14, Lund', contact:'Emma', phone:'070300400', email:'emma@craftcorner.se', mapUrl:'https://www.google.com/maps?q=55.7008,13.1910', lat:55.7008, lng:13.1910, createdAt:new Date().toISOString()}
+        {
+          id: "cust1",
+          name: "Möllan Taproom",
+          address: "Bergsgatan 10, Malmö",
+          contact: "Sara",
+          phone: "070100200",
+          email: "sara@mollan.se",
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "cust2",
+          name: "Dockside Bistro",
+          address: "Nordensköldsgatan 24, Malmö",
+          contact: "Lukas",
+          phone: "070200300",
+          email: "order@dockside.se",
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "cust3",
+          name: "Lund Craft Corner",
+          address: "Stora Södergatan 14, Lund",
+          contact: "Emma",
+          phone: "070300400",
+          email: "emma@craftcorner.se",
+          createdAt: new Date().toISOString()
+        }
       ];
+
       state.sales = [
-        {id:'sale_1', customerId:'cust_1', date:'2026-02-11', beer:'Pilsner 30L keg', invoice:'INV-001', volume:30, value:1560, notes:'Weekly refill', createdAt:new Date().toISOString()},
-        {id:'sale_2', customerId:'cust_1', date:'2026-03-09', beer:'Pilsner 30L keg', invoice:'INV-008', volume:30, value:1560, notes:'Tap reset', createdAt:new Date().toISOString()},
-        {id:'sale_3', customerId:'cust_2', date:'2026-03-14', beer:'Hazy IPA 20L keg', invoice:'INV-010', volume:20, value:1420, notes:'Seasonal line', createdAt:new Date().toISOString()},
-        {id:'sale_4', customerId:'cust_3', date:'2026-04-03', beer:'Mixed cans 48x330ml', invoice:'INV-013', volume:15.8, value:1980, notes:'Launch order', createdAt:new Date().toISOString()},
-        {id:'sale_5', customerId:'cust_2', date:'2026-04-22', beer:'Lager 30L keg', invoice:'INV-018', volume:30, value:1490, notes:'Event weekend', createdAt:new Date().toISOString()}
+        {
+          id: "sale1",
+          customerId: "cust1",
+          date: "2026-02-11",
+          beer: "Pilsner 30L keg",
+          invoice: "INV-001",
+          volume: 30,
+          unit: "liters",
+          rawVolume: 30,
+          value: 1560,
+          notes: "Weekly refill",
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "sale2",
+          customerId: "cust1",
+          date: "2026-03-09",
+          beer: "Pilsner 30L keg",
+          invoice: "INV-008",
+          volume: 30,
+          unit: "liters",
+          rawVolume: 30,
+          value: 1560,
+          notes: "Tap reset",
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "sale3",
+          customerId: "cust2",
+          date: "2026-03-14",
+          beer: "Hazy IPA 20L keg",
+          invoice: "INV-010",
+          volume: 20,
+          unit: "liters",
+          rawVolume: 20,
+          value: 1420,
+          notes: "Seasonal line",
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "sale4",
+          customerId: "cust3",
+          date: "2026-04-03",
+          beer: "Mixed cans 48x330ml",
+          invoice: "INV-013",
+          volume: 15.8,
+          unit: "liters",
+          rawVolume: 48,
+          value: 1980,
+          notes: "Launch order",
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "sale5",
+          customerId: "cust2",
+          date: "2026-04-22",
+          beer: "Lager 30L keg",
+          invoice: "INV-018",
+          volume: 30,
+          unit: "liters",
+          rawVolume: 30,
+          value: 1490,
+          notes: "Event weekend",
+          createdAt: new Date().toISOString()
+        }
       ];
-      function unlockApp(){
-      document.body.classList.remove('locked');
-      els.authOverlay.style.display = 'none';
-    }
 
-    els.loginForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      const ok = els.loginUsername.value === AUTH.username && els.loginPassword.value === AUTH.password;
-      if (!ok) {
-        els.loginError.textContent = 'Wrong username or password.';
-        return;
-      }
-      els.loginError.textContent = '';
-      unlockApp();
+      refresh();
+      switchSection("dashboard");
     });
 
-    (async function init(){
+    function unlockApp() {
+      document.body.classList.remove("locked");
+      els.authOverlay.style.display = "none";
+    }
+
+    els.loginForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const ok =
+        els.loginUsername.value === AUTH.username &&
+        els.loginPassword.value === AUTH.password;
+      if (!ok) {
+        els.loginError.textContent = "Wrong username or password.";
+        return;
+      }
+      els.loginError.textContent = "";
+      unlockApp();
+      refresh();
+      switchSection("dashboard");
+    });
+
+    async function init() {
       try {
-        state.db = await openDb();
+        await openDb();
         const persisted = await loadPersistedState();
         if (persisted) {
           state.customers = Array.isArray(persisted.customers) ? persisted.customers : [];
           state.sales = Array.isArray(persisted.sales) ? persisted.sales : [];
-          if (persisted.theme === 'light' || persisted.theme === 'dark') {
+          if (persisted.theme === "light" || persisted.theme === "dark") {
             state.theme = persisted.theme;
-            document.documentElement.setAttribute('data-theme', state.theme);
+            document.documentElement.setAttribute("data-theme", state.theme);
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        // ignore, app still works in-memory
+      }
       refresh();
-    })();
-      switchSection('dashboard');
-    });
-
-    function unlockApp(){
-      document.body.classList.remove('locked');
-      els.authOverlay.style.display = 'none';
     }
 
-    els.loginForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      const ok = els.loginUsername.value === AUTH.username && els.loginPassword.value === AUTH.password;
-      if (!ok) {
-        els.loginError.textContent = 'Wrong username or password.';
-        return;
-      }
-      els.loginError.textContent = '';
-      unlockApp();
-    });
-
-    (async function init(){
-      try {
-        state.db = await openDb();
-        const persisted = await loadPersistedState();
-        if (persisted) {
-          state.customers = Array.isArray(persisted.customers) ? persisted.customers : [];
-          state.sales = Array.isArray(persisted.sales) ? persisted.sales : [];
-          if (persisted.theme === 'light' || persisted.theme === 'dark') {
-            state.theme = persisted.theme;
-            document.documentElement.setAttribute('data-theme', state.theme);
-          }
-        }
-      } catch (e) {}
-      refresh();
-    })();
+    init();
   </script>
 </body>
 </html>
